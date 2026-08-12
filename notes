@@ -1,0 +1,5 @@
+check this note first for additional instruction or comment for the next editor
+
+install modules:
+npx expo install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context @react-native-picker/picker
+

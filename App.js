@@ -1,20 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import StartScreen from './screens/StartScreen';
+import HomeScreen from './screens/HomeScreen';
+import EnrollNewResident from './screens/EnrollNewResident';
+
+const Stack = createNativeStackNavigator();
 
 export default function App() {
+  const [session, setSession] = useState(null);
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {session ? (
+            <>
+              <Stack.Screen name="Home">
+                {(props) => <HomeScreen {...props} setSession={setSession} />}
+              </Stack.Screen>
+              <Stack.Screen name="EnrollNewResident" component={EnrollNewResident} />
+            </>
+          ) : (
+            <Stack.Screen name="Start">
+              {(props) => <StartScreen {...props} setSession={setSession} />}
+            </Stack.Screen>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
