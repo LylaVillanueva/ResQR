@@ -3,13 +3,6 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 
-const gridItems = [
-  { id: '1', label: 'text' },
-  { id: '2', label: 'text' },
-  { id: '3', label: 'text' },
-  { id: '4', label: 'text' },
-];
-
 const tabs = [
   { key: 'home', label: 'Home', screen: 'Home' },
   { key: 'residents', label: 'Residents', screen: 'ResidentScreen' },
@@ -24,29 +17,11 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>HOME</Text>
+        <Text style={styles.heading}>Alert</Text>
         <Text style={styles.subheading}>Welcome, [Name]</Text>
 
         <View style={styles.divider} />
-        <View style={styles.grid}>
-          {gridItems.map((item) => (
-            <View key={item.id} style={styles.gridCard}>
-              <Text style={styles.gridIcon}>#</Text>
-              <Text style={styles.gridLabel}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
 
-        <View style={styles.divider} />
-        <Text style={styles.heading1}>Needs Attention</Text>
-
-        <View style={styles.headCard}>
-          <View style={styles.headCardTextWrap}>
-            <Text style={styles.headCardTitle}>[Name] - open alert</Text>
-            <Text style={styles.headCardSubtitle}>waiting for confirmation</Text>
-          </View>
-          <View style={styles.headCardDot} />
-        </View>
       </View>
 
       <View style={styles.tabBar}>
@@ -71,7 +46,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#e0e0e' },
   content: { flex: 1, padding: 20 },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
+  heading: { fontSize: 26, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
 
@@ -119,7 +94,6 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#333',
-    marginRight: 2,
   },
 
   tabBar: {
