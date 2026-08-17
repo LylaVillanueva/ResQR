@@ -138,7 +138,7 @@ export default function LoginPortal({ setSession, onBack }) {
               </>
             ) : (
               <>
-                <Text style={styles.label}>Enter 6-digit code</Text>
+                <Text style={styles.label}>Enter the 6-digit verification code we sent to your email address.</Text>
                 <View style={styles.otpRow}>
                   {otp.map((digit, index) => (
                     <TextInput
