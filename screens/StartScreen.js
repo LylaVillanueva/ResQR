@@ -35,13 +35,13 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'space-between', padding: 24, paddingBottom: 40, backgroundColor: '#e0e0e0' },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   icon: { width: 250, height: 250, marginBottom: 24, borderRadius: 24 },
-  title: { fontSize: 32, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
-  description: { fontSize: 16, color: '#666', textAlign: 'center', paddingHorizontal: 16 },
+  title: { fontSize: 32, fontFamily: 'Poppins_600SemiBold', marginBottom: 12, textAlign: 'center' },
+  description: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', paddingHorizontal: 16 },
   startButton: {
-    backgroundColor: '#e02f2f',
+    backgroundColor: '#245490',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  startButtonText: { color: '#fff', fontSize: 17, fontWeight: '600' },
+  startButtonText: { color: '#fff', fontSize: 17, fontFamily: 'Poppins_500Medium', fontWeight: '600' },
 });

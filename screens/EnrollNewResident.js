@@ -77,16 +77,17 @@ export default function EnrollNewResident({ navigation }) {
     return (
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.heading}>QR GENERATED</Text>
+        <Text style={styles.heading}>QR Card Generated</Text>
 
         <View style={styles.qrBox}>
           <View style={styles.qrPlaceholder}>
             <Text style={styles.qrPlaceholderText}>QR CODE{'\n'}PLACEHOLDER</Text>
           </View>
           <Text style={styles.qrName}>{form.fullName || 'NAME'}</Text>
-          <Text style={styles.qrDetail}>{form.address || 'text text text text text'}</Text>
-          <Text style={styles.qrDetail}>{form.barangay || 'text text text text text'}</Text>
-          <Text style={styles.qrDetail}>{form.phone ? `+63${form.phone}` : 'text text text text text'}</Text>
+          <Text style={styles.qrDetail}>{form.ID || 'ID: BRG-SC-2026-001'}</Text>
+          <Text style={styles.qrDetail}>{form.guardian || 'Guardian: Mang Kanor'}</Text>
+          <Text style={styles.qrDetail}>{form.phone ? `+63${form.phone}` : 'Contact: +639XXXXXXXXXX'}</Text>
+          <Text style={styles.qrDetail}>{form.brgy || 'Barangay: 206'}</Text>
         </View>
 
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Home')}>
@@ -123,12 +124,11 @@ export default function EnrollNewResident({ navigation }) {
           ‹ Back
         </Text>
         <Text style={styles.heading}>ENROLL NEW RESIDENT</Text>
-        <Text style={styles.subheading}>please fill up all fields</Text>
-
-        <ProgressBar activeCount={step} />
 
         {step === 1 ? (
           <>
+            <Text style={styles.subheading}>step 1 : Personal Information</Text>
+            <ProgressBar activeCount={step} />
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>
                 Select Resident Type<Text style={styles.required}>*</Text>
@@ -137,6 +137,7 @@ export default function EnrollNewResident({ navigation }) {
                 <Picker
                   selectedValue={form.role}
                   onValueChange={(v) => updateField('role', v)}
+                  style={{ fontFamily: 'Poppins_400Regular' }}
                 >
                   <Picker.Item label="Kindly select role" value="" />
                   <Picker.Item label="Senior Citizen" value="Senior Citizen" />
@@ -174,6 +175,8 @@ export default function EnrollNewResident({ navigation }) {
           </>
         ) : (
           <>
+            <Text style={styles.subheading}>step 2 : Guardian Information</Text>
+            <ProgressBar activeCount={step} />
             <Field
               label="Guardian Full Name"
               required
@@ -188,6 +191,7 @@ export default function EnrollNewResident({ navigation }) {
                 <Picker
                   selectedValue={form.relationship}
                   onValueChange={(v) => updateField('relationship', v)}
+                  style={{ fontFamily: 'Poppins_400Regular' }}
                 >
                   <Picker.Item label="Kindly select relationship" value="" />
                   <Picker.Item label="Parent" value="Parent" />
@@ -254,9 +258,9 @@ function Field({ label, required, value, onChangeText, placeholder }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 20, paddingBottom: 40 },
-  back: { fontSize: 16, color: '#e02f2f', marginBottom: 12 },
-  heading: { fontSize: 22, fontWeight: 'bold' },
-  subheading: { fontSize: 14, color: '#666', marginBottom: 16 },
+  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 12 },
+  heading: { fontSize: 26, fontFamily: 'Poppins_600SemiBold', marginBottom: -8 },
+  subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 8 },
 
   progressRow: { flexDirection: 'row', marginBottom: 24 },
   progressBar: {
@@ -266,23 +270,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     marginRight: 6,
   },
-  progressBarActive: { backgroundColor: '#e02f2f' },
+  progressBarActive: { backgroundColor: '#245490' },
 
   fieldWrap: { marginBottom: 14 },
-  fieldLabel: { fontSize: 14, color: '#333', marginBottom: 6, fontWeight: '500' },
-  required: { color: '#e02f2f' },
+  fieldLabel: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 6 },
+  required: { color: '#245490' },
   input: {
+    flex: 1,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
-    fontSize: 15,
+    backgroundColor: '#f2f2f2f0',
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 16,
   },
 
   pickerWrap: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
+    paddingLeft: 2,
+    backgroundColor: '#f2f2f2f0',
     overflow: 'hidden',
   },
 
@@ -303,7 +312,9 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
-    fontSize: 15,
+    backgroundColor: '#f2f2f2f0',
+    fontSize: 16,
+    fontFamily: 'Poppins_400Regular',
   },
 
   bottomBar: {
@@ -316,25 +327,25 @@ const styles = StyleSheet.create({
   },
 
   primaryButton: {
-    backgroundColor: '#e02f2f',
+    backgroundColor: '#d3e5f8',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
   },
-  primaryButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  primaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
 
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#e02f2f',
+    borderColor: '#d3e5f8',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
   },
-  secondaryButtonText: { color: '#e02f2f', fontSize: 16, fontWeight: '600' },
+  secondaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_400Regular' },
 
-  pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12 },
+  pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 
   qrBox: {
     borderWidth: 1,
@@ -343,20 +354,22 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     marginTop: 20,
-    marginHorizontal: 20,
+    marginBottom: 20,
+    marginHorizontal: 16,
   },
   qrPlaceholder: {
-    width: 180,
-    height: 180,
+    width: 280,
+    height: 280,
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginTop: 5,
+    marginBottom: 25,
     backgroundColor: '#f2f2f2',
   },
-  qrPlaceholderText: { textAlign: 'center', color: '#999', fontSize: 13 },
-  qrName: { fontSize: 18, fontWeight: 'bold', marginBottom: 8 },
-  qrDetail: { fontSize: 13, color: '#333', textAlign: 'center' },
+  qrPlaceholderText: { textAlign: 'center', color: '#999', fontSize: 13, fontFamily: 'Poppins_500Medium' },
+  qrName: { fontSize: 24, fontFamily: 'Poppins_500Medium', marginBottom: 6 },
+  qrDetail: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#333', textAlign: 'center', marginBottom: -2 },
 });
