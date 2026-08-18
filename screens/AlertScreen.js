@@ -18,7 +18,7 @@ export default function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.heading}>Alert</Text>
-        <Text style={styles.subheading}>Welcome, [Name]</Text>
+        <Text style={styles.subheading}>Tap on alert to confirm status</Text>
 
         <View style={styles.divider} />
 

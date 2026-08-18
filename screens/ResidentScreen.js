@@ -106,7 +106,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  
   residentCard: {
     flexDirection: 'row',
     justifyContent: 'space-between',
