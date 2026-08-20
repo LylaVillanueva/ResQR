@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const tabs = [
-  { key: 'home', label: 'Home', screen: 'Home' },
-  { key: 'residents', label: 'Residents', screen: 'ResidentScreen' },
-  { key: 'alert', label: 'Alert', screen: 'AlertScreen' },
-  { key: 'log', label: 'Log', screen: 'LogScreen' },
+  { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
+  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'users' },
+  { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
+  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
 ];
 
 export default function ProfileScreen({ route, navigation }) {
@@ -72,7 +73,9 @@ export default function ProfileScreen({ route, navigation }) {
 
         <View style={styles.divider} />
         <Text style={styles.heading1}>Scan History</Text>
+      </View>
 
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.scanCard}>
           <View style={styles.scanCardTextWrap}>
             <Text style={[styles.scanCardTitle, styles.statusClosed]}>Alert Closed</Text>
@@ -98,32 +101,34 @@ export default function ProfileScreen({ route, navigation }) {
           </View>
           <Text style={[styles.scanCardSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>A Bystander Scanned</Text>
           <Text style={styles.scanCardSubtitle}>Optional Note</Text>
-        </View>
-      </View>
+        </View> 
+      </ScrollView>
 
-            <View style={styles.tabBar}>
-              {tabs.map((tab) => (
-                <TouchableOpacity
-                  key={tab.key}
-                  style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
-                  onPress={() => navigation.navigate(tab.screen)}
-                >
-                  <Text
-                    style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
-                  >
-                    {tab.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+      <View style={styles.tabBar}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+            onPress={() => navigation.navigate(tab.screen)}
+          >
+            <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
+            <Text
+              style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
+            >
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#e0e0e' },
-  content: { flex: 1, padding: 20 },
-  scrollContent: { padding: 20, marginBottom: 40 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { padding: 20, paddingBottom: 0 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20, paddingTop: 0 },
   back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 16, marginTop: -16 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: 10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
@@ -179,18 +184,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold', 
     marginBottom: 2 
   },
-  statusOpen: {
-    color: '#a83232',
-    backgroundColor: '#fbd1d1',
-  },
-  statusPending: {
-    color: '#8a6d1d',
-    backgroundColor: '#fbf1a1',
-  },
-  statusClosed: {
-    color: '#288928',
-    backgroundColor: '#a1fbaa',
-  },
+  statusOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
+  statusPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
+  statusClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
   scanCardTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   scanCardSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
   scanCardDot: {
@@ -212,16 +208,12 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
+    paddingBottom: 0,
     marginHorizontal: 4,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  tabButtonActive: {
-    backgroundColor: '#d3e5f8',
-    borderColor: '#d3e5f8',
-  },
+  tabButtonActive: { backgroundColor: '#d3e5f8', borderColor: '#d3e5f8'},
   tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#333' },
   tabLabelActive: { color: '#245490', fontFamily: 'Poppins_700Bold' },
 

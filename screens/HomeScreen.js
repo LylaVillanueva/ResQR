@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const gridItems = [
   { id: '1', label: 'text' },
@@ -11,10 +12,10 @@ const gridItems = [
 ];
 
 const tabs = [
-  { key: 'home', label: 'Home', screen: 'Home' },
-  { key: 'residents', label: 'Residents', screen: 'ResidentScreen' },
-  { key: 'alert', label: 'Alert', screen: 'AlertScreen' },
-  { key: 'log', label: 'Log', screen: 'LogScreen' },
+  { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
+  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'users' },
+  { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
+  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
 ];
 
 export default function HomeScreen({ navigation }) {
@@ -56,6 +57,7 @@ export default function HomeScreen({ navigation }) {
             style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
             onPress={() => navigation.navigate(tab.screen)}
           >
+            <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
             <Text
               style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
             >
@@ -69,7 +71,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#e0e0e' },
+  container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, padding: 20 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
@@ -133,16 +135,12 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
+    paddingBottom: 0,
     marginHorizontal: 4,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  tabButtonActive: {
-    backgroundColor: '#d3e5f8',
-    borderColor: '#d3e5f8',
-  },
+  tabButtonActive: { backgroundColor: '#d3e5f8', borderColor: '#d3e5f8'},
   tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#333' },
   tabLabelActive: { color: '#245490', fontFamily: 'Poppins_700Bold' },
 });

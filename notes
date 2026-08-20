@@ -4,5 +4,5 @@ install modules:
 npx expo install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context @react-native-picker/picker
 
 poppin font and icons:
-npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vector-icons/Entypo
+npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vector-icons/Entypo expo/vector-icons/FontAwesome5
 

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 const tabs = [
-  { key: 'home', label: 'Home', screen: 'Home' },
-  { key: 'residents', label: 'Residents', screen: 'ResidentScreen' },
-  { key: 'alert', label: 'Alert', screen: 'AlertScreen' },
-  { key: 'log', label: 'Log', screen: 'LogScreen' },
+  { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
+  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'users' },
+  { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
+  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
 ];
 
-export default function HomeScreen({ navigation }) {
+export default function ResidentScreen({ navigation }) {
   const route = useRoute();
   const activeTab = tabs.find((tab) => tab.screen === route.name)?.key;
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,7 +23,7 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.heading}>Residents</Text>
 
         <View style={styles.divider} />
-        <View style={styles.searchBar}>
+                <View style={styles.searchBar}>
         <Ionicons name="search" size={18} color="#245490" />
         <TextInput
             style={styles.searchInput}
@@ -33,7 +34,9 @@ export default function HomeScreen({ navigation }) {
         />
         </View>
         <View style={styles.divider} />
+      </View>
 
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <TouchableOpacity 
             style={styles.residentCard}
             onPress={() => navigation.navigate('ProfileScreen')}
@@ -45,7 +48,9 @@ export default function HomeScreen({ navigation }) {
             </View>
             <View style={styles.statusDot} /> 
         </TouchableOpacity>
+      </ScrollView>
 
+      <View style={styles.buttonContent}>
         <TouchableOpacity
           style={styles.enrollButton}
           onPress={() => navigation.navigate('EnrollNewResident')}
@@ -61,6 +66,7 @@ export default function HomeScreen({ navigation }) {
             style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
             onPress={() => navigation.navigate(tab.screen)}
           >
+            <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
             <Text
               style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
             >
@@ -74,8 +80,11 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#e0e0e' },
-  content: { flex: 1, padding: 20 },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { padding: 20, paddingBottom: 0 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20, paddingTop: 0 },
+  buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: 10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
@@ -155,16 +164,12 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 4,
+    paddingBottom: 0,
     marginHorizontal: 4,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
   },
-  tabButtonActive: {
-    backgroundColor: '#d3e5f8',
-    borderColor: '#d3e5f8',
-  },
+  tabButtonActive: { backgroundColor: '#d3e5f8', borderColor: '#d3e5f8'},
   tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#333' },
   tabLabelActive: { color: '#245490', fontFamily: 'Poppins_700Bold' },
 });

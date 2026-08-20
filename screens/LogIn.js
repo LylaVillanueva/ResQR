@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Entypo from '@expo/vector-icons/Entypo';
+import { FontAwesome5 } from '@expo/vector-icons';
 
 export default function LoginPortal({ setSession, onBack }) {
   const [phone, setPhone] = useState('');

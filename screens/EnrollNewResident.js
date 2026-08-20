@@ -119,16 +119,20 @@ export default function EnrollNewResident({ navigation }) {
   // ---------------- STEP 1 & 2: FORM ----------------
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         <Text style={styles.back} onPress={() => (step === 1 ? navigation.goBack() : setStep(1))}>
           ‹ Back
         </Text>
         <Text style={styles.heading}>ENROLL NEW RESIDENT</Text>
+        <Text style={styles.subheading}>
+          {step === 1 ? 'step 1 : Personal Information' : 'step 2 : Guardian Information'}
+        </Text>
+        <ProgressBar activeCount={step} />
+      </View>
 
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {step === 1 ? (
           <>
-            <Text style={styles.subheading}>step 1 : Personal Information</Text>
-            <ProgressBar activeCount={step} />
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>
                 Select Resident Type<Text style={styles.required}>*</Text>
@@ -175,8 +179,6 @@ export default function EnrollNewResident({ navigation }) {
           </>
         ) : (
           <>
-            <Text style={styles.subheading}>step 2 : Guardian Information</Text>
-            <ProgressBar activeCount={step} />
             <Field
               label="Guardian Full Name"
               required
@@ -257,7 +259,9 @@ function Field({ label, required, value, onChangeText, placeholder }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scrollContent: { padding: 20, paddingBottom: 40 },
+  content: { padding: 20, paddingBottom: 0 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20, paddingTop: 0 },
   back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 12 },
   heading: { fontSize: 26, fontFamily: 'Poppins_600SemiBold', marginBottom: -8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 8 },

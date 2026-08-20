@@ -9,7 +9,7 @@ import ResidentScreen from './screens/ResidentScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import EnrollNewResident from './screens/EnrollNewResident';
 import AlertScreen from './screens/AlertScreen';
-import LogScreen from './screens/LogScreen';
+import AuditLogScreen from './screens/AuditLogScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,7 +39,7 @@ export default function App() {
               <Stack.Screen name="ResidentScreen" component={ResidentScreen} />
               <Stack.Screen name="EnrollNewResident" component={EnrollNewResident} />
               <Stack.Screen name="AlertScreen" component={AlertScreen} />
-              <Stack.Screen name="LogScreen" component={LogScreen} />
+              <Stack.Screen name="AuditLogScreen" component={AuditLogScreen} />
               <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
             </>
           ) : (
