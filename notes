@@ -6,3 +6,5 @@ npx expo install @react-navigation/native @react-navigation/native-stack react-n
 poppin font and icons:
 npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vector-icons/Entypo expo/vector-icons/FontAwesome5
 
+camera:
+npx expo install expo-camera

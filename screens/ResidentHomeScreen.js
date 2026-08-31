@@ -1,42 +1,59 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ScrollView } from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 
 const tabs = [
-  { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
+  { key: 'home', label: 'Home', screen: 'ResidentHomeScreen', icon: 'home' },
   { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'address-card' },
   { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
   { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
 ];
 
-export default function ResidentScreen({ navigation }) {
+export default function HomeScreen({ navigation }) {
   const route = useRoute();
   const activeTab = tabs.find((tab) => tab.screen === route.name)?.key;
-  const [searchQuery, setSearchQuery] = useState('');
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>Residents</Text>
+        <Text style={styles.heading}>HOME</Text>
+        <Text style={styles.subheading}>Welcome, [Name]</Text>
 
-        <View style={styles.divider} />
-                <View style={styles.searchBar}>
-        <Ionicons name="search" size={18} color="#245490" />
-        <TextInput
-            style={styles.searchInput}
-            placeholder="Search by name or ID"
-            placeholderTextColor="#999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-        />
-        </View>
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={{paddingVertical: 45, marginBottom: 4}}>
+          <Text style={[styles.heading1, { textAlign: 'center' }]}>No Active Alert</Text>
+          <Text style={[styles.subheading, { textAlign: 'center' }]}>Always remember to keep your ward safe and healthy</Text>
+          <Text style={styles.scanCardSubtitle}>note:display yung taas kapag walang active alert, sa baba yung kapag meron</Text>
+        </View>
+          <View style={[styles.scanCard, styles.scanCardActive]}>
+            <View style={styles.scanCardTextWrap}>
+              <Text style={[styles.scanCardTitle, styles.statusNotSafe, styles.shadow]}>Alert Open</Text>
+              <Text style={styles.scanCardTime}>12:00 PM</Text>
+            </View>
+                  
+            <Text style={styles.heading1}>[Resident Name]</Text>
+            <Text style={styles.scanCardSubtitle}>Scanned by a Bystander</Text>
+            <Text style={styles.scanCardSubtitle}>Note: Optional Note that the bystander sent through the 
+              public landing page. This is very helpful for the guardian and responder</Text>
+                  
+            <View style={styles.scanCardButtonWrap}>
+            <TouchableOpacity>
+              <Text style={[styles.scanCardButtons, styles.statusSafe, styles.shadow]}>Mark Safe</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={[styles.scanCardButtons, styles.statusNotSafe, styles.shadow]}>Not Safe</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.divider} />
+        <Text style={styles.heading1}>My Wards</Text>
+
         <TouchableOpacity 
             style={styles.residentCard}
             onPress={() => navigation.navigate('ProfileScreen')}
@@ -49,15 +66,6 @@ export default function ResidentScreen({ navigation }) {
             <View style={styles.statusDot} /> 
         </TouchableOpacity>
       </ScrollView>
-
-      <View style={styles.buttonContent}>
-        <TouchableOpacity
-          style={styles.enrollButton}
-          onPress={() => navigation.navigate('EnrollNewResident')}
-        >
-          <Text style={styles.enrollButtonText}>+ Enroll New Resident</Text>
-        </TouchableOpacity>
-      </View>
 
       <View style={styles.tabBar}>
         {tabs.slice(0, 2).map((tab) => (
@@ -106,35 +114,76 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 0 },
   scrollView: { flex: 1 },
   scrollContent: { padding: 20, paddingTop: 0 },
-  buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: 10 },
+  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
-
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#d3e5f8',
-    borderWidth: 1,
-    borderColor: '#245490',
-    borderRadius: 14,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginBottom: 16,
-  },
-  searchIcon: { fontSize: 16, marginRight: 16, color: '#245490' },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'Poppins_400Regular',
-    marginLeft: 8,
-    color: '#333',
-  },
 
   divider: {
     borderTopWidth: 1,
     borderTopColor: '#ddd',
     marginBottom: 20,
+  },
+
+  shadow: {
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  scanCard: {
+    flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
+  },
+  scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  scanCardButtonWrap: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+  scanCardTitle: { 
+    borderRadius: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 16,
+    fontSize: 15, 
+    fontFamily: 'Poppins_600SemiBold', 
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  scanCardButtons: { 
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 42,
+    fontSize: 15, 
+    fontFamily: 'Poppins_600SemiBold', 
+    marginBottom: 2,
+  },
+  scanCardActive: { 
+    borderColor: '#a83232',
+    backgroundColor: '#fff',
+    shadowColor: '#a83232',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  statusNotSafe: { color: '#a83232', backgroundColor: '#fbd1d1', },
+  statusSafe: { color: '#288928', backgroundColor: '#a1fbaa', },
+  scanCardTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
+  scanCardSubtitle: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
+  scanCardDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#333',
+    marginRight: 2,
   },
 
   residentCard: {
@@ -171,16 +220,26 @@ const styles = StyleSheet.create({
     marginRight: 2,
   },
 
-  enrollButton: {
-    borderWidth: 1,
-    borderColor: '#245490',
-    borderRadius: 10,
-    backgroundColor: '#d3e5f8',
-    paddingVertical: 14,
+  headCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
   },
-  enrollButtonText: { color: '#245490', fontSize: 15, fontFamily: 'Poppins_500Medium' },
+  headCardTextWrap: { flex: 1 },
+  headCardTitle: { fontSize: 15, fontFamily: 'Poppins_500Medium', marginBottom: 2 },
+  headCardSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', color: '#666' },
+  headCardDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#333',
+    marginRight: 2,
+  },
 
   tabBar: {
     flexDirection: 'row',

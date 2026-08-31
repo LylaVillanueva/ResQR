@@ -90,11 +90,11 @@ export default function EnrollNewResident({ navigation }) {
           <Text style={styles.qrDetail}>{form.brgy || 'Barangay: 206'}</Text>
         </View>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.primaryButtonText}>Save & Print QR</Text>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.buttonText}>Save & Print QR</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={[styles.pdfButton, styles.shadow]}
           onPress={() => {
             setForm({
               role: '',
@@ -109,7 +109,7 @@ export default function EnrollNewResident({ navigation }) {
             setStep(1);
           }}
         >
-          <Text style={styles.secondaryButtonText}>Download PDF</Text>
+          <Text style={styles.pdfButtonText}>Download PDF</Text>
         </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
@@ -226,11 +226,11 @@ export default function EnrollNewResident({ navigation }) {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.button, styles.shadow]}
           onPress={step === 1 ? handleNext : handleEnroll}
           disabled={loading}
         >
-          <Text style={styles.primaryButtonText}>
+          <Text style={styles.buttonText}>
             {step === 1 ? 'Next' : loading ? 'Enrolling...' : 'Enroll'}
           </Text>
         </TouchableOpacity>
@@ -330,24 +330,31 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 
-  primaryButton: {
-    backgroundColor: '#d3e5f8',
+  shadow: {
+    shadowColor: '#245490',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  button: {
     borderRadius: 10,
+    backgroundColor: '#d3e5f8',
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 8,
   },
-  primaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
-
-  secondaryButton: {
+  buttonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
+  pdfButton: {
     borderWidth: 1,
-    borderColor: '#d3e5f8',
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
   },
-  secondaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_400Regular' },
+  pdfButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_400Regular' },
 
   pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 

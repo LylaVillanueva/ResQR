@@ -10,6 +10,9 @@ import ProfileScreen from './screens/ProfileScreen';
 import EnrollNewResident from './screens/EnrollNewResident';
 import AlertScreen from './screens/AlertScreen';
 import AuditLogScreen from './screens/AuditLogScreen';
+import ScannerScreen from './screens/ScannerScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import ResidentHomeScreen from './screens/ResidentHomeScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -41,6 +44,9 @@ export default function App() {
               <Stack.Screen name="AlertScreen" component={AlertScreen} />
               <Stack.Screen name="AuditLogScreen" component={AuditLogScreen} />
               <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
+              <Stack.Screen name="ScannerScreen" component={ScannerScreen} />
+              <Stack.Screen name="SettingsScreen" component={SettingsScreen} />
+              <Stack.Screen name="ResidentHomeScreen" component={ResidentHomeScreen} />
             </>
           ) : (
             <Stack.Screen name="Start">

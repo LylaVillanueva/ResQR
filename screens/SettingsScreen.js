@@ -7,7 +7,7 @@ const tabs = [
   { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
   { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'address-card' },
   { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
-  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
+  { key: 'settings', label: 'Settings', screen: 'SettingsScreen', icon: 'cog' },
 ];
 
 export default function ProfileScreen({ route, navigation }) {
@@ -67,42 +67,20 @@ export default function ProfileScreen({ route, navigation }) {
                 <Text style={styles.meta}>{resident?.role || 'Type: Person with Disability'}</Text>
             </View>
         </View>
-
-        <TouchableOpacity style={styles.button} onPress={viewQR}>
-            <Text style={styles.buttonText}>View QR Code</Text>
-        </TouchableOpacity>
-
         <View style={styles.divider} />
-        <Text style={styles.heading1}>Scan History</Text>
+        <Text style={styles.heading1}>Settings</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusClosed]}>Alert Closed</Text>
-            <Text style={styles.scanCardTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.scanCardSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>Confirmation Complete</Text>
-          <Text style={styles.scanCardSubtitle}>[Responder Name] - 2 of 2</Text>
-        </View>
-
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusPending]}>Confirmation</Text>
-            <Text style={styles.scanCardTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.scanCardSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>[Name] Confirm Safe/Not Safe</Text>
-          <Text style={styles.scanCardSubtitle}>Waiting for confirmation - 1 of 2</Text>
-        </View>
-
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusOpen]}>Alert Open</Text>
-            <Text style={styles.scanCardTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.scanCardSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>A Bystander Scanned</Text>
-          <Text style={styles.scanCardSubtitle}>Optional Note</Text>
-        </View> 
+                <View style={[styles.settingsCard]}>
+                  <Text style={styles.subheading}>Account Log Out</Text>
+                  <Text style={styles.settingsSubtitle}>This action logs out your account or if you want to switch account.</Text>                  
+                  <View style={styles.settingsButtonWrap}>
+                    <TouchableOpacity>
+                      <Text style={[styles.settingsButtons, styles.buttonColor, styles.shadow]}>Log Out</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
       </ScrollView>
 
       <View style={styles.tabBar}>
@@ -155,7 +133,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 16, marginTop: -16 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', marginBottom: 10 },
 
   profileBar: {
     flexDirection: 'row',
@@ -198,7 +176,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  scanCard: {
+  settingsCard: {
     flexDirection: 'column',
     borderWidth: 1,
     borderColor: '#ddd',
@@ -212,32 +190,17 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  scanCardTitle: { 
+  buttonColor: { color: '#a83232', backgroundColor: '#fbd1d1', },
+  settingsSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
+  settingsButtonWrap: { flexDirection: 'row', justifyContent: 'right', marginTop: 12 },
+  settingsButtons: { 
     borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 42,
     fontSize: 15, 
     fontFamily: 'Poppins_600SemiBold', 
     marginBottom: 2,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statusOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
-  scanCardTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
-  scanCardSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
-  scanCardDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#333',
-    marginRight: 2,
+    justifyContent: 'right',
   },
 
   tabBar: {

@@ -270,12 +270,17 @@ const styles = StyleSheet.create({
   },
 
   button: {
-    backgroundColor: '#d3e5f8',
     borderRadius: 10,
+    backgroundColor: '#d3e5f8',
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 8,
+    shadowColor: '#245490',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  buttonText: { color: '#245490', fontFamily: 'Poppins_500Medium', fontSize: 16, fontWeight: '600' },
+  buttonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
   buttonLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 });

@@ -6,9 +6,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 const tabs = [
   { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
-  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'users' },
+  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'address-card' },
   { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
-  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
+  { key: 'audit', label: 'Settings', screen: 'SettingsScreen', icon: 'cog' },
 ];
 
 export default function AlertScreen({ navigation }) {
@@ -27,7 +27,7 @@ export default function AlertScreen({ navigation }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={[styles.scanCard, styles.scanCardActive]}>
           <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusOpen]}>Alert Open</Text>
+            <Text style={[styles.scanCardTitle, styles.statusOpen, styles.shadow]}>Alert Open</Text>
             <Text style={styles.scanCardTime}>12:00 PM</Text>
           </View>
           
@@ -38,17 +38,17 @@ export default function AlertScreen({ navigation }) {
           
           <View style={styles.scanCardButtonWrap}>
             <TouchableOpacity>
-              <Text style={[styles.scanCardButtons, styles.statusClosed]}>Mark Safe</Text>
+              <Text style={[styles.scanCardButtons, styles.statusClosed, styles.shadow]}>Mark Safe</Text>
             </TouchableOpacity>
             <TouchableOpacity>
-              <Text style={[styles.scanCardButtons, styles.statusOpen]}>Not Safe</Text>
+              <Text style={[styles.scanCardButtons, styles.statusOpen, styles.shadow]}>Not Safe</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.scanCard}>
           <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusClosed]}>Alert Closed</Text>
+            <Text style={[styles.scanCardTitle, styles.statusClosed, styles.shadow]}>Alert Closed</Text>
             <Text style={styles.scanCardTime}>12:00 PM</Text>
           </View>
           
@@ -58,16 +58,38 @@ export default function AlertScreen({ navigation }) {
       </ScrollView>
 
       <View style={styles.tabBar}>
-        {tabs.map((tab) => (
+        {tabs.slice(0, 2).map((tab) => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+            style={styles.tabButton}
             onPress={() => navigation.navigate(tab.screen)}
           >
-            <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
-            <Text
-              style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
-            >
+            <View style={[styles.tabLabel, activeTab === tab.key && styles.iconActive]}>
+              <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
+            </View>            
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        <TouchableOpacity
+          style={styles.scanButton}
+          onPress={() => navigation.navigate('ScannerScreen')}
+        >
+          <FontAwesome5 name="qrcode" size={28} color="#333" />
+        </TouchableOpacity>
+
+        {tabs.slice(2).map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={styles.tabButton}
+            onPress={() => navigation.navigate(tab.screen)}
+          >
+            <View style={[styles.tabLabel, activeTab === tab.key && styles.iconActive]}>
+              <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
+            </View>          
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -111,6 +133,14 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
     marginBottom: 20,
   },
+  
+  shadow: {
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 2,
+  },
 
   scanCard: {
     flexDirection: 'column',
@@ -119,6 +149,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
   scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   scanCardButtonWrap: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
@@ -128,7 +164,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     fontSize: 15, 
     fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2 
+    marginBottom: 2,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   scanCardButtons: { 
     borderRadius: 10,
@@ -136,9 +174,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 42,
     fontSize: 15, 
     fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2 
+    marginBottom: 2,
   },
-  scanCardActive: { borderColor: '#a83232', },
+  scanCardActive: { 
+    borderColor: '#a83232',
+    backgroundColor: '#fff',
+    shadowColor: '#a83232',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
   statusOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
   statusPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
   statusClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
@@ -156,6 +202,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
+    backgroundColor: '#ebf1f7',
     paddingVertical: 10,
     paddingHorizontal: 16,
     justifyContent: 'space-between',
@@ -168,7 +215,36 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderRadius: 8,
   },
-  tabButtonActive: { backgroundColor: '#d3e5f8', borderColor: '#d3e5f8'},
   tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#333' },
   tabLabelActive: { color: '#245490', fontFamily: 'Poppins_700Bold' },
+  iconActive: {
+    borderRadius: 20,
+    width: 40,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#d3e5f8',
+    shadowColor: '#245490',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  scanButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
 });

@@ -6,9 +6,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 const tabs = [
   { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
-  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'users' },
-  { key: 'alert', label: 'Alert', screen: 'AlertScreen', icon: 'bell' },
-  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'clipboard' },
+  { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'address-card' },
+  { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'bell' },
+  { key: 'alert', label: 'Settings', screen: 'AlertScreen', icon: 'cog' },
 ];
 
 export default function AuditLogScreen({ navigation }) {
@@ -73,16 +73,38 @@ export default function AuditLogScreen({ navigation }) {
       </View>
 
       <View style={styles.tabBar}>
-        {tabs.map((tab) => (
+        {tabs.slice(0, 2).map((tab) => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tabButton, activeTab === tab.key && styles.tabButtonActive]}
+            style={styles.tabButton}
             onPress={() => navigation.navigate(tab.screen)}
           >
-            <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
-            <Text
-              style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}
-            >
+            <View style={[styles.tabLabel, activeTab === tab.key && styles.iconActive]}>
+              <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
+            </View>            
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+
+        <TouchableOpacity
+          style={styles.scanButton}
+          onPress={() => navigation.navigate('ScannerScreen')}
+        >
+          <FontAwesome5 name="qrcode" size={28} color="#333" />
+        </TouchableOpacity>
+
+        {tabs.slice(2).map((tab) => (
+          <TouchableOpacity
+            key={tab.key}
+            style={styles.tabButton}
+            onPress={() => navigation.navigate(tab.screen)}
+          >
+            <View style={[styles.tabLabel, activeTab === tab.key && styles.iconActive]}>
+              <FontAwesome5 name={tab.icon} size={20} color={activeTab === tab.key ? '#245490' : '#333'} />
+            </View>          
+            <Text style={[styles.tabLabel, activeTab === tab.key && styles.tabLabelActive]}>
               {tab.label}
             </Text>
           </TouchableOpacity>
@@ -127,6 +149,14 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
+  shadow: {
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
   scanCard: {
     flexDirection: 'column',
     borderWidth: 1,
@@ -134,6 +164,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 8,
   },
   scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   scanCardTitle: { 
@@ -164,13 +200,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#ebd28f',
     paddingVertical: 14,
     alignItems: 'center',
+    marginBottom: 8,
   },
-  pdfButtonText: { color: '#8a6d1d', fontSize: 15, fontFamily: 'Poppins_500Medium' },
+  pdfButtonText: { color: '#8a6d1d', fontSize: 16, fontFamily: 'Poppins_500Medium' },
 
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
     borderTopColor: '#ddd',
+    backgroundColor: '#ebf1f7',
     paddingVertical: 10,
     paddingHorizontal: 16,
     justifyContent: 'space-between',
@@ -183,7 +221,36 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
     borderRadius: 8,
   },
-  tabButtonActive: { backgroundColor: '#d3e5f8', borderColor: '#d3e5f8'},
   tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#333' },
   tabLabelActive: { color: '#245490', fontFamily: 'Poppins_700Bold' },
+  iconActive: {
+    borderRadius: 20,
+    width: 40,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#d3e5f8',
+    shadowColor: '#245490',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+
+  scanButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: '#aaa',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
+  },
 });
