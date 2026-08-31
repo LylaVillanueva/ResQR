@@ -8,3 +8,10 @@ npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vec
 
 camera:
 npx expo install expo-camera
+
+web install:
+// vite react
+npx create-vite web -- --template react
+// choose ESLint
+
+
