@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
+import { api, clearSession } from '../lib/api';
 
 const gridItems = [
   { id: '1', label: 'text' },
@@ -17,15 +18,33 @@ const tabs = [
   { key: 'log', label: 'Log', screen: 'LogScreen' },
 ];
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, session, setSession }) {
   const route = useRoute();
   const activeTab = tabs.find((tab) => tab.screen === route.name)?.key;
+  const firstName = session?.user?.fullName?.split(' ')[0] ?? '';
+
+  // TEMPORARY: no logout button exists elsewhere in the UI yet.
+  // Remove once ProfileScreen or a settings screen takes this over.
+  async function handleLogout() {
+    try {
+      await api.logout();
+    } catch {
+      // best-effort — still clear the local session below either way
+    }
+    await clearSession();
+    setSession(null);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.heading}>HOME</Text>
-        <Text style={styles.subheading}>Welcome, [Name]</Text>
+        <View style={styles.topRow}>
+          <Text style={styles.subheading}>Welcome, {firstName}</Text>
+          <TouchableOpacity onPress={handleLogout}>
+            <Text style={styles.logoutText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.divider} />
         <View style={styles.grid}>
@@ -73,7 +92,9 @@ const styles = StyleSheet.create({
   content: { flex: 1, padding: 20 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666' },
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  logoutText: { fontSize: 14, fontFamily: 'Poppins_500Medium', color: '#e02f2f' },
 
   grid: {
     flexDirection: 'row',

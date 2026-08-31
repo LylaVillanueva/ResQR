@@ -1,13 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import LoginPortal from './LogIn';
+import PermissionScreen, { PERMISSIONS_ACCEPTED_KEY } from './PermissionScreen';
 
 export default function StartScreen({ setSession }) {
-  const [showLogin, setShowLogin] = useState(false);
+  const [view, setView] = useState('start'); // 'start' | 'permission' | 'login'
+  const [permissionsAccepted, setPermissionsAccepted] = useState(false);
 
-  if (showLogin) {
-    return <LoginPortal setSession={setSession} onBack={() => setShowLogin(false)} />;
+  useEffect(() => {
+    AsyncStorage.getItem(PERMISSIONS_ACCEPTED_KEY).then((value) => {
+      setPermissionsAccepted(value === 'true');
+    });
+  }, []);
+
+  function handleLogInPress() {
+    setView(permissionsAccepted ? 'login' : 'permission');
+  }
+
+  function handlePermissionsAgreed() {
+    setPermissionsAccepted(true);
+    setView('login');
+  }
+
+  if (view === 'permission') {
+    return <PermissionScreen onAgree={handlePermissionsAgreed} onBack={() => setView('start')} />;
+  }
+
+  if (view === 'login') {
+    return <LoginPortal setSession={setSession} onBack={() => setView('start')} />;
   }
 
   return (
@@ -24,7 +46,7 @@ export default function StartScreen({ setSession }) {
         </Text>
       </View>
 
-      <TouchableOpacity style={styles.startButton} onPress={() => setShowLogin(true)}>
+      <TouchableOpacity style={styles.startButton} onPress={handleLogInPress}>
         <Text style={styles.startButtonText}>Log In</Text>
       </TouchableOpacity>
     </SafeAreaView>

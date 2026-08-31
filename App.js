@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
+import { api, clearSession } from './lib/api';
 import StartScreen from './screens/StartScreen';
 import HomeScreen from './screens/HomeScreen';
 import ResidentScreen from './screens/ResidentScreen';
@@ -15,6 +16,7 @@ const Stack = createNativeStackNavigator();
 
 export default function App() {
   const [session, setSession] = useState(null);
+  const [restoringSession, setRestoringSession] = useState(true);
 
   const [fontsLoaded] = useFonts({
     Poppins_400Regular,
@@ -23,7 +25,22 @@ export default function App() {
     Poppins_700Bold,
   });
 
-  if (!fontsLoaded) {
+  useEffect(() => {
+    (async () => {
+      const restored = await api.restoreSession();
+      if (restored) {
+        try {
+          const user = await api.getMyProfile();
+          setSession({ user });
+        } catch {
+          await clearSession();
+        }
+      }
+      setRestoringSession(false);
+    })();
+  }, []);
+
+  if (!fontsLoaded || restoringSession) {
     return null;
   }
 
@@ -34,10 +51,12 @@ export default function App() {
           {session ? (
             <>
               <Stack.Screen name="Home">
-                {(props) => <HomeScreen {...props} setSession={setSession} />}
+                {(props) => <HomeScreen {...props} session={session} setSession={setSession} />}
               </Stack.Screen>
               <Stack.Screen name="ResidentScreen" component={ResidentScreen} />
-              <Stack.Screen name="EnrollNewResident" component={EnrollNewResident} />
+              <Stack.Screen name="EnrollNewResident">
+                {(props) => <EnrollNewResident {...props} session={session} />}
+              </Stack.Screen>
               <Stack.Screen name="AlertScreen" component={AlertScreen} />
               <Stack.Screen name="LogScreen" component={LogScreen} />
               <Stack.Screen name="ProfileScreen" component={ProfileScreen} />
