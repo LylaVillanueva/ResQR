@@ -170,7 +170,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#333',
     marginRight: 2,
   },
-
   enrollButton: {
     borderWidth: 1,
     borderColor: '#245490',

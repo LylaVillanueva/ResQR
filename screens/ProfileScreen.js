@@ -197,7 +197,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
     marginBottom: 20,
   },
-
   scanCard: {
     flexDirection: 'column',
     borderWidth: 1,

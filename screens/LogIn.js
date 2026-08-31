@@ -200,7 +200,6 @@ const styles = StyleSheet.create({
   back: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#245490', marginBottom: 12 },
   heading: { fontFamily: 'Poppins_600SemiBold', fontSize: 26, marginBottom: -8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 20 },
-
   label: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#666', marginBottom: 8 },
   phoneRow: { flexDirection: 'row', marginBottom: 16 },
   countryCode: {

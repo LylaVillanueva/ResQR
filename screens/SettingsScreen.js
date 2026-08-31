@@ -135,6 +135,7 @@ const styles = StyleSheet.create({
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', marginBottom: 10 },
 
+  
   profileBar: {
     flexDirection: 'row',
     alignItems: 'center',

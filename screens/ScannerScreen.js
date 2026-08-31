@@ -77,7 +77,6 @@ const styles = StyleSheet.create({
     borderTopColor: '#ddd',
     marginBottom: 20,
   },
-
   fieldContent: {
     flex: 1,
     alignItems: 'center',
@@ -106,7 +105,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
-  
+
   permissionText: {
     fontFamily: 'Poppins_400Regular',
     fontSize: 12,

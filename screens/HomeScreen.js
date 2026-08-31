@@ -120,7 +120,6 @@ const styles = StyleSheet.create({
   },
   enrollButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
 
-
   shadow: {
     backgroundColor: '#fff',
     shadowColor: '#245490',
