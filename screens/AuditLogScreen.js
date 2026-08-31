@@ -8,7 +8,7 @@ const tabs = [
   { key: 'home', label: 'Home', screen: 'Home', icon: 'home' },
   { key: 'residents', label: 'Residents', screen: 'ResidentScreen', icon: 'address-card' },
   { key: 'audit', label: 'Audit', screen: 'AuditLogScreen', icon: 'bell' },
-  { key: 'alert', label: 'Settings', screen: 'AlertScreen', icon: 'cog' },
+  { key: 'alert', label: 'Settings', screen: 'SettingsScreen', icon: 'cog' },
 ];
 
 export default function AuditLogScreen({ navigation }) {
