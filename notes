@@ -10,8 +10,6 @@ camera:
 npx expo install expo-camera
 
 web install:
-// vite react
-npx create-vite web -- --template react
-// choose ESLint
-
-
+npx expo install react-native-web react-dom @expo/metro-runtime
+- to run: npx expo start --web --host lan
+- to view web: http://[ip]:[]/resident/BRC-SC-2026-0001

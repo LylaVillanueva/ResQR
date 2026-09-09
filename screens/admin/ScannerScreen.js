@@ -67,7 +67,7 @@ export default function ScannerScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 20, paddingBottom: -10 },
-  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 16, marginTop: -16 },
+  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 16, marginTop: -16 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', textAlign: 'center' },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20, textAlign: 'center' },
@@ -88,8 +88,8 @@ const styles = StyleSheet.create({
   scanBox: {
     width: 320,
     height: 320,
-    borderWidth: 2,
-    borderColor: '#222',
+    borderWidth: 5,
+    borderColor: '#a83232',
     borderStyle: 'dashed',
     borderRadius: 20,
     marginBottom: 24,
@@ -102,19 +102,18 @@ const styles = StyleSheet.create({
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
   },
-
 
   permissionText: {
     fontFamily: 'Poppins_400Regular',
-    fontSize: 12,
+    fontSize: 14,
     color: '#666',
     textAlign: 'center',
     marginBottom: 10,
   },
   permissionButton: {
-    backgroundColor: '#245490',
+    backgroundColor: '#a83232',
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 8,
@@ -122,7 +121,7 @@ const styles = StyleSheet.create({
   permissionButtonText: {
     color: '#fff',
     fontFamily: 'Poppins_500Medium',
-    fontSize: 12,
+    fontSize: 14,
   },
 
   rescanOverlay: {
@@ -132,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   rescanButton: {
-    backgroundColor: '#245490',
+    backgroundColor: '#a83232',
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -140,6 +139,6 @@ const styles = StyleSheet.create({
   rescanButtonText: {
     color: '#fff',
     fontFamily: 'Poppins_500Medium',
-    fontSize: 13,
+    fontSize: 14,
   },
 });

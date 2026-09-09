@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   description: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', paddingHorizontal: 16 },
   
   startButton: {
-    backgroundColor: '#245490',
+    backgroundColor: '#c12b2b',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

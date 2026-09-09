@@ -76,7 +76,10 @@ export default function EnrollNewResident({ navigation }) {
   if (step === 3) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+        <Text style={styles.back} onPress={() => navigation.navigate('ResidentScreen')}>
+          ‹ Done
+        </Text>
         <Text style={styles.heading}>QR Card Generated</Text>
 
         <View style={styles.qrBox}>
@@ -111,7 +114,7 @@ export default function EnrollNewResident({ navigation }) {
         >
           <Text style={styles.pdfButtonText}>Download PDF</Text>
         </TouchableOpacity>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     );
   }
@@ -262,7 +265,7 @@ const styles = StyleSheet.create({
   content: { padding: 20, paddingBottom: 0 },
   scrollView: { flex: 1 },
   scrollContent: { padding: 20, paddingTop: 0 },
-  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 12 },
+  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#c12b2b', marginBottom: 12 },
   heading: { fontSize: 26, fontFamily: 'Poppins_600SemiBold', marginBottom: -8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 8 },
 
@@ -274,11 +277,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     marginRight: 6,
   },
-  progressBarActive: { backgroundColor: '#245490' },
+  progressBarActive: { backgroundColor: '#c12b2b' },
 
   fieldWrap: { marginBottom: 14 },
   fieldLabel: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 6 },
-  required: { color: '#245490' },
+  required: { color: '#c12b2b' },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -330,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   shadow: {
-    shadowColor: '#245490',
+    shadowColor: '#625350',
     shadowOffset: { width: 7, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -338,12 +341,12 @@ const styles = StyleSheet.create({
   },
   button: {
     borderRadius: 10,
-    backgroundColor: '#d3e5f8',
+    backgroundColor: '#fbd1d1',
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 8,
   },
-  buttonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
+  buttonText: { color: '#a83232', fontSize: 16, fontFamily: 'Poppins_500Medium' },
   pdfButton: {
     borderWidth: 1,
     borderColor: '#ddd',
@@ -353,7 +356,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  pdfButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_400Regular' },
+  pdfButtonText: { color: '#c12b2b', fontSize: 16, fontFamily: 'Poppins_400Regular' },
 
   pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 

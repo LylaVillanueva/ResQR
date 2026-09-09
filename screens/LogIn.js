@@ -14,10 +14,6 @@ export default function LoginPortal({ setSession, onBack }) {
   const [checked, setChecked] = useState({ notifications: false, location: false, privacy: false });
 
   function handleSendOtp() {
-    if (phone.length < 10) {
-      Alert.alert('Invalid number', 'Please enter a valid phone number.');
-      return;
-    }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -39,6 +35,13 @@ export default function LoginPortal({ setSession, onBack }) {
     }
   }
 
+  function getRoleFromPhone(phone) {
+    if (phone === '1') return 'admin';
+    if (phone === '2') return 'guardian';
+    if (phone === '3') return 'responder';
+    return null;
+  }
+
   function handleVerifyOtp() {
     const code = otp.join('');
     if (code.length < 6) {
@@ -48,8 +51,13 @@ export default function LoginPortal({ setSession, onBack }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      if (code === '123456') {
-        setShowAgreements(true);
+      if (code === '000000') {
+        const role = getRoleFromPhone(phone); // phone should be the plain 11-digit number, e.g. "09111111111"
+        if (!role) {
+          Alert.alert('Unknown account', 'This phone number is not registered for testing.');
+          return;
+        }
+        setSession({ user: { phone }, role });
       } else {
         Alert.alert('Incorrect code', 'That code is invalid.');
       }
@@ -197,7 +205,7 @@ export default function LoginPortal({ setSession, onBack }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: 20, paddingBottom: 40 },
-  back: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#245490', marginBottom: 12 },
+  back: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#a83232', marginBottom: 12 },
   heading: { fontFamily: 'Poppins_600SemiBold', fontSize: 26, marginBottom: -8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 20 },
   label: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#666', marginBottom: 8 },
@@ -249,8 +257,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxChecked: {
-    backgroundColor: '#245490',
-    borderColor: '#245490',
+    backgroundColor: '#a83232',
+    borderColor: '#ffdcdc',
   },
   checkLabel: {
     flex: 1,
@@ -270,16 +278,16 @@ const styles = StyleSheet.create({
 
   button: {
     borderRadius: 10,
-    backgroundColor: '#d3e5f8',
+    backgroundColor: '#ffdcdc',
     paddingVertical: 14,
     alignItems: 'center',
     marginBottom: 8,
-    shadowColor: '#245490',
+    shadowColor: '#666',
     shadowOffset: { width: 7, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
-  buttonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
+  buttonText: { color: '#a83232', fontSize: 16, fontFamily: 'Poppins_500Medium' },
   buttonLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 });
