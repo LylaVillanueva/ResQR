@@ -4,5 +4,12 @@ install modules:
 npx expo install @react-navigation/native @react-navigation/native-stack react-native-screens react-native-safe-area-context @react-native-picker/picker
 
 poppin font and icons:
-npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vector-icons/Entypo
+npx expo install @expo-google-fonts/poppins expo-font expo/vector-icons expo/vector-icons/Entypo expo/vector-icons/FontAwesome5
 
+camera:
+npx expo install expo-camera
+
+web install:
+npx expo install react-native-web react-dom @expo/metro-runtime
+- to run: npx expo start --web --host lan
+- to view web: http://[ip]:[]/resident/BRC-SC-2026-0001

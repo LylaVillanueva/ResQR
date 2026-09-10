@@ -219,7 +219,10 @@ export default function EnrollNewResident({ navigation, session }) {
   if (step === 3) {
     return (
       <SafeAreaView style={styles.container}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+        <Text style={styles.back} onPress={() => navigation.navigate('ResidentScreen')}>
+          ‹ Done
+        </Text>
         <Text style={styles.heading}>QR Card Generated</Text>
 
         <View style={styles.qrBox}>
@@ -233,11 +236,11 @@ export default function EnrollNewResident({ navigation, session }) {
           <Text style={styles.qrDetail}>{form.brgy || 'Barangay: 206'}</Text>
         </View>
 
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Home')}>
-          <Text style={styles.primaryButtonText}>Save & Print QR</Text>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate('Home')}>
+          <Text style={styles.buttonText}>Save & Print QR</Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.secondaryButton}
+          style={[styles.pdfButton, styles.shadow]}
           onPress={() => {
             setForm({
               role: '',
@@ -255,9 +258,9 @@ export default function EnrollNewResident({ navigation, session }) {
             setStep(1);
           }}
         >
-          <Text style={styles.secondaryButtonText}>Download PDF</Text>
+          <Text style={styles.pdfButtonText}>Download PDF</Text>
         </TouchableOpacity>
-        </ScrollView>
+        </View>
       </SafeAreaView>
     );
   }
@@ -265,16 +268,20 @@ export default function EnrollNewResident({ navigation, session }) {
   // ---------------- STEP 1 & 2: FORM ----------------
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <View style={styles.content}>
         <Text style={styles.back} onPress={() => (step === 1 ? navigation.goBack() : setStep(1))}>
           ‹ Back
         </Text>
         <Text style={styles.heading}>ENROLL NEW RESIDENT</Text>
+        <Text style={styles.subheading}>
+          {step === 1 ? 'step 1 : Personal Information' : 'step 2 : Guardian Information'}
+        </Text>
+        <ProgressBar activeCount={step} />
+      </View>
 
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {step === 1 ? (
           <>
-            <Text style={styles.subheading}>step 1 : Personal Information</Text>
-            <ProgressBar activeCount={step} />
             <View style={styles.fieldWrap}>
               <Text style={styles.fieldLabel}>
                 Select Resident Type<Text style={styles.required}>*</Text>
@@ -530,11 +537,11 @@ export default function EnrollNewResident({ navigation, session }) {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.primaryButton}
+          style={[styles.button, styles.shadow]}
           onPress={step === 1 ? handleNext : handleEnroll}
           disabled={loading}
         >
-          <Text style={styles.primaryButtonText}>
+          <Text style={styles.buttonText}>
             {step === 1 ? 'Next' : loading ? 'Enrolling...' : 'Enroll'}
           </Text>
         </TouchableOpacity>
@@ -576,8 +583,10 @@ function Field({ label, required, value, onChangeText, placeholder, keyboardType
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  scrollContent: { padding: 20, paddingBottom: 40 },
-  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 12 },
+  content: { padding: 20, paddingBottom: 0 },
+  scrollView: { flex: 1 },
+  scrollContent: { padding: 20, paddingTop: 0 },
+  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#c12b2b', marginBottom: 12 },
   heading: { fontSize: 26, fontFamily: 'Poppins_600SemiBold', marginBottom: -8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 8 },
 
@@ -589,11 +598,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     marginRight: 6,
   },
-  progressBarActive: { backgroundColor: '#245490' },
+  progressBarActive: { backgroundColor: '#c12b2b' },
 
   fieldWrap: { marginBottom: 14 },
   fieldLabel: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 6 },
-  required: { color: '#245490' },
+  required: { color: '#c12b2b' },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -713,25 +722,31 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     backgroundColor: '#fff',
   },
-
-  primaryButton: {
-    backgroundColor: '#d3e5f8',
+  shadow: {
+    shadowColor: '#625350',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  button: {
     borderRadius: 10,
+    backgroundColor: '#fbd1d1',
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 8,
+    marginBottom: 8,
   },
-  primaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_500Medium' },
-
-  secondaryButton: {
+  buttonText: { color: '#a83232', fontSize: 16, fontFamily: 'Poppins_500Medium' },
+  pdfButton: {
     borderWidth: 1,
-    borderColor: '#d3e5f8',
+    borderColor: '#ddd',
+    backgroundColor: '#fff',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 12,
   },
-  secondaryButtonText: { color: '#245490', fontSize: 16, fontFamily: 'Poppins_400Regular' },
+  pdfButtonText: { color: '#c12b2b', fontSize: 16, fontFamily: 'Poppins_400Regular' },
 
   pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 

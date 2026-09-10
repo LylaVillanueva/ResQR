@@ -1,23 +1,23 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, applyTokens, getDeviceId } from '../lib/api';
 
 export default function LoginPortal({ setSession, onBack }) {
   const [method, setMethod] = useState('email'); // 'email' | 'phone' — matches backend: either can authenticate
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(''); // local digits only, e.g. "9171234567" — +63 is prefixed for you
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef([]);
 
-  const identifier = method === 'email' ? email.trim() : phone.trim();
+  const identifier = method === 'email' ? email.trim() : `+63${phone.trim()}`;
 
   function isValidIdentifier() {
     if (method === 'email') return email.includes('@');
-    // Expect E.164 format, e.g. +639171234567
-    return /^\+\d{8,15}$/.test(phone.trim());
+    // PH mobile number: 10 digits, starts with 9 (the +63 prefix is added separately).
+    return /^9\d{9}$/.test(phone.trim());
   }
 
   // 1. Send 6-Digit OTP via Email or Phone
@@ -27,7 +27,7 @@ export default function LoginPortal({ setSession, onBack }) {
         method === 'email' ? 'Invalid Email' : 'Invalid Phone Number',
         method === 'email'
           ? 'Please enter a valid email address.'
-          : 'Please enter a valid phone number in international format, e.g. +639171234567.'
+          : 'Please enter a valid 10-digit mobile number, e.g. 9171234567.'
       );
       return;
     }
@@ -108,14 +108,19 @@ export default function LoginPortal({ setSession, onBack }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         <Text
           style={styles.back}
           onPress={() => (!otpSent ? onBack?.() : setOtpSent(false))}
         >
           ‹ Back
         </Text>
-        <Text style={styles.heading}>Log In</Text>
+        <Text style={styles.heading}>Sign In</Text>
 
         {!otpSent && (
           <View style={styles.methodToggle}>
@@ -139,22 +144,39 @@ export default function LoginPortal({ setSession, onBack }) {
         )}
 
         {!otpSent ? (
-          <>
-            <Text style={styles.label}>
-              {method === 'email' ? 'Enter Email Address' : 'Enter Phone Number'}
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder={method === 'email' ? 'name@example.com' : '+639171234567'}
-              keyboardType={method === 'email' ? 'email-address' : 'phone-pad'}
-              autoCapitalize="none"
-              value={method === 'email' ? email : phone}
-              onChangeText={method === 'email' ? setEmail : setPhone}
-            />
-          </>
+          method === 'email' ? (
+            <>
+              <Text style={styles.label}>Enter Email Address</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="name@example.com"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={setEmail}
+              />
+            </>
+          ) : (
+            <>
+              <Text style={styles.label}>Enter Phone Number</Text>
+              <View style={styles.phoneRow}>
+                <View style={styles.countryCode}>
+                  <Text style={styles.countryCodeText}>+63</Text>
+                </View>
+                <TextInput
+                  style={styles.phoneInput}
+                  placeholder="9XX-XXX-XXXX"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={phone}
+                  onChangeText={(value) => setPhone(value.replace(/[^0-9]/g, ''))}
+                />
+              </View>
+            </>
+          )
         ) : (
           <>
-            <Text style={styles.label}>Enter 6-digit code sent to {identifier}</Text>
+            <Text style={styles.label}>Enter the 6-digit verification code sent to {identifier}</Text>
             <View style={styles.otpRow}>
               {otp.map((digit, index) => (
                 <TextInput
@@ -179,7 +201,7 @@ export default function LoginPortal({ setSession, onBack }) {
 
       <View style={styles.bottomBar}>
         <TouchableOpacity
-          style={styles.button}
+          style={[styles.button, styles.shadow]}
           onPress={otpSent ? handleVerifyOtp : handleSendOtp}
           disabled={loading}
         >
@@ -194,15 +216,19 @@ export default function LoginPortal({ setSession, onBack }) {
           </Text>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1 },
   scrollContent: { padding: 20, paddingBottom: 40 },
-  back: { fontSize: 16, color: '#e02f2f', marginBottom: 12 },
-  heading: { fontSize: 22, fontWeight: 'bold', marginBottom: 16 },
+  back: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#a83232', marginBottom: 12 },
+  heading: { fontFamily: 'Poppins_600SemiBold', fontSize: 26, marginBottom: 16 },
+  label: { fontFamily: 'Poppins_400Regular', fontSize: 16, color: '#666', marginBottom: 8 },
+
   methodToggle: {
     flexDirection: 'row',
     backgroundColor: '#f2f2f2',
@@ -224,17 +250,40 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
-  methodButtonText: { fontSize: 14, color: '#888', fontWeight: '500' },
-  methodButtonTextActive: { color: '#e02f2f', fontWeight: '700' },
-  label: { fontSize: 14, color: '#666', marginBottom: 8 },
+  methodButtonText: { fontFamily: 'Poppins_500Medium', fontSize: 14, color: '#888' },
+  methodButtonTextActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' },
+
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     borderRadius: 8,
     padding: 12,
+    fontFamily: 'Poppins_400Regular',
     fontSize: 16,
     marginBottom: 16,
   },
+
+  phoneRow: { flexDirection: 'row', marginBottom: 16 },
+  countryCode: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+    marginRight: 8,
+    backgroundColor: '#f2f2f2',
+  },
+  countryCodeText: { fontSize: 16, fontWeight: '600' },
+  phoneInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 12,
+    fontFamily: 'Poppins_400Regular',
+    fontSize: 16,
+  },
+
   otpRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
   otpBox: {
     width: 45,
@@ -244,6 +293,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     fontSize: 20,
   },
+  resend: { fontFamily: 'Poppins_500Medium', marginTop: 16, textAlign: 'center', color: '#a83232', fontSize: 13 },
+
   bottomBar: {
     paddingHorizontal: 20,
     paddingTop: 12,
@@ -253,12 +304,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#e02f2f',
     borderRadius: 10,
+    backgroundColor: '#ffdcdc',
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#666',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  resend: { marginTop: 16, textAlign: 'center', color: '#000' },
+  buttonText: { color: '#a83232', fontSize: 16, fontFamily: 'Poppins_500Medium' },
 });

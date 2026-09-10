@@ -59,8 +59,9 @@ const styles = StyleSheet.create({
   icon: { width: 250, height: 250, marginBottom: 24, borderRadius: 24 },
   title: { fontSize: 32, fontFamily: 'Poppins_600SemiBold', marginBottom: 12, textAlign: 'center' },
   description: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', paddingHorizontal: 16 },
+  
   startButton: {
-    backgroundColor: '#245490',
+    backgroundColor: '#c12b2b',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
