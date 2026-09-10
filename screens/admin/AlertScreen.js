@@ -1,8 +1,10 @@
-import React, {useState} from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api } from '../../lib/api';
 
 const filters = [
   { key: 'all', label: 'All' },
@@ -11,9 +13,64 @@ const filters = [
   { key: 'closed', label: 'Closed' },
 ];
 
+const STATUS_LABELS = {
+  active: 'Alert Open',
+  confirmed_safe: 'Alert Closed',
+  confirmed_not_safe: 'Alert Pending',
+  escalated: 'Escalated',
+  assigned: 'Alert Pending',
+  resolved: 'Alert Closed',
+  closed: 'Alert Closed',
+};
+
+function statusStyleKey(status) {
+  if (status === 'active') return 'alertOpen';
+  if (['confirmed_safe', 'resolved', 'closed'].includes(status)) return 'alertClosed';
+  return 'alertPending';
+}
+
+function decisionLabel(decision) {
+  if (decision === 'safe') return 'Safe';
+  if (decision === 'not_safe') return 'Not Safe';
+  return 'Waiting';
+}
+
 export default function AlertScreen({ navigation }) {
   const [activeFilter, setActiveFilter] = useState(null);
-  
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setLoading(true);
+      setError(null);
+      api
+        .listActiveIncidents()
+        .then((data) => {
+          if (!cancelled) setIncidents(data);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const filteredIncidents = incidents.filter((incident) => {
+    if (!activeFilter || activeFilter === 'all') return true;
+    if (activeFilter === 'open') return incident.status === 'active';
+    if (activeFilter === 'closed') return ['confirmed_safe', 'resolved', 'closed'].includes(incident.status);
+    // 'pending' — anything in progress but not fresh-open or fully closed
+    return !['active', 'confirmed_safe', 'resolved', 'closed'].includes(incident.status);
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -46,73 +103,74 @@ export default function AlertScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>  
-        </View> 
+          </View>
+        </View>
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.alertCard, styles.alertCardActive]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertOpen, styles.shadow]}>Alert Open</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
-          <Text style={styles.alertSubtitle}>Note: Optional Note that the bystander sent through the 
-            public landing page. This is very helpful for the guardian and responder</Text>
-          
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Guardian: Waiting</Text>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Responder: Waiting</Text>
-          </View>
+        {loading ? (
+          <ActivityIndicator style={{ marginVertical: 20 }} color="#a83232" />
+        ) : error ? (
+          <Text style={styles.emptyText}>Couldn't load alerts: {error}</Text>
+        ) : filteredIncidents.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {activeFilter === 'closed'
+              ? 'No recently closed alerts to show here yet.'
+              : 'No alerts match this filter right now.'}
+          </Text>
+        ) : (
+          filteredIncidents.map((incident) => {
+            const isActive = incident.status === 'active';
+            return (
+              <View key={incident.id} style={[styles.alertCard, isActive && styles.alertCardActive]}>
+                <View style={styles.alertCardTextWrap}>
+                  <Text style={[styles.alertCardTitle, styles[statusStyleKey(incident.status)], styles.shadow]}>
+                    {STATUS_LABELS[incident.status] || incident.status}
+                  </Text>
+                  <Text style={styles.alertTime}>
+                    {new Date(incident.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                </View>
 
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AssignResponder')}>
-              <Text style={styles.buttonText}>Assign Responder</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
+                <Text style={styles.heading1}>{incident.resident_name}</Text>
+                <Text style={styles.alertSubtitle}>Scanned by a bystander</Text>
+                {!!incident.bystander_notes && (
+                  <Text style={styles.alertSubtitle}>Note: {incident.bystander_notes}</Text>
+                )}
 
-        <View style={[styles.alertCard]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertPending, styles.shadow]}>Alert Pending</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
+                <View style={styles.statusRow}>
+                  <Text style={[styles.statusText, styles[statusStyleKey(incident.guardian_decision ? 'closed' : 'active')], styles.shadow]}>
+                    Guardian: {decisionLabel(incident.guardian_decision)}
+                  </Text>
+                  <Text style={[styles.statusText, styles[statusStyleKey(incident.responder_decision ? 'closed' : 'active')], styles.shadow]}>
+                    Responder: {decisionLabel(incident.responder_decision)}
+                  </Text>
+                </View>
 
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusPending, styles.shadow]}>Guardian: Pending</Text>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Responder: Not Safe</Text>
-          </View>
-
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-              <Text style={styles.buttonText}>Tap for Full Details</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertClosed, styles.shadow]}>Alert Closed</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Resolved - Both Party Confirmed Safe</Text>
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-              <Text style={styles.buttonText}>Tap for Full Details</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
+                <View style={styles.buttonWrap}>
+                  {!incident.assigned_responder_id ? (
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={() => navigation.navigate('AssignResponder', { incidentId: incident.id })}
+                    >
+                      <Text style={styles.buttonText}>Assign Responder</Text>
+                      <FontAwesome5 name="caret-down" size={18} color="#245490" />
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.button}
+                      onPress={() => navigation.navigate('AlertDetails', { incidentId: incident.id })}
+                    >
+                      <Text style={styles.buttonText}>Tap for Full Details</Text>
+                      <FontAwesome5 name="caret-down" size={18} color="#245490" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            );
+          })
+        )}
       </ScrollView>
 
       <TabBar />
@@ -128,11 +186,12 @@ const styles = StyleSheet.create({
   heading: { fontSize: 26, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginLeft: 8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#888', textAlign: 'center', marginTop: 20 },
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   auditButton: { alignItems: 'center', padding: 6, marginTop: 8 },
   auditButtonText: { fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: 2 },
-  
+
   shadow: {
     shadowColor: '#aaa',
     shadowOffset: { width: 7, height: 10 },
@@ -140,10 +199,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
 
-  filterBar: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 4, 
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
     marginTop: -10,
     marginBottom: 6,
   },
@@ -167,7 +226,7 @@ const styles = StyleSheet.create({
   },
   filterButtonActive: { backgroundColor: '#ffdcdc', borderWidth: 1, borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 7 },
   filterLabel: { fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold', },
+  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
 
   alertCard: {
     flexDirection: 'column',
@@ -184,12 +243,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   alertCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  alertCardTitle: { 
+  alertCardTitle: {
     borderRadius: 10,
     paddingVertical: 4,
     paddingHorizontal: 16,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
+    fontSize: 15,
+    fontFamily: 'Poppins_600SemiBold',
     marginBottom: 2,
   },
   button: {
@@ -204,8 +263,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#d3e5f8',
   },
   buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  buttonTextWrap: { flexDirection: 'row', justifyContent: 'space-between' },
-  alertCardActive: { 
+  buttonWrap: { flexDirection: 'row', justifyContent: 'space-between' },
+  alertCardActive: {
     borderColor: '#a83232',
     backgroundColor: '#fff',
     shadowColor: '#a83232',
@@ -214,17 +273,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
+  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' },
+  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa' },
   alertTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   alertSubtitle: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, marginBottom: 10 },
-  detailButton: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#245490' },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
-    marginBottom: 12
+    marginBottom: 12,
   },
   statusText: {
     flex: 1,
@@ -238,7 +296,4 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#666',
   },
-  statusOpen: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa', },
 });

@@ -1,11 +1,83 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api } from '../../lib/api';
 
-export default function ProfileScreen({ route, navigation }) {
-  const [selectedResponder, setSelectedResponder] = useState(null);
+export default function AssignResponder({ route, navigation }) {
+  const incidentId = route.params?.incidentId;
+  const [incident, setIncident] = useState(null);
+  const [responders, setResponders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedResponderId, setSelectedResponderId] = useState(null);
+  const [assigning, setAssigning] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!incidentId) {
+        setLoading(false);
+        setError('No alert specified.');
+        return;
+      }
+      let cancelled = false;
+      setLoading(true);
+      setError(null);
+      Promise.all([api.getIncident(incidentId), api.listResponders()])
+        .then(([incidentData, responderData]) => {
+          if (cancelled) return;
+          setIncident(incidentData);
+          setResponders(responderData);
+          setSelectedResponderId(incidentData.assigned_responder_id ?? null);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [incidentId])
+  );
+
+  async function handleAssign() {
+    if (!selectedResponderId) return;
+    setAssigning(true);
+    try {
+      await api.assignResponder(incidentId, selectedResponderId);
+      navigation.navigate('AlertDetails', { incidentId });
+    } catch (err) {
+      Alert.alert('Could not assign responder', err.message);
+    } finally {
+      setAssigning(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
+          <ActivityIndicator style={{ marginTop: 40 }} color="#a83232" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !incident) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
+          <Text style={styles.emptyText}>Couldn't load this alert{error ? `: ${error}` : '.'}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -13,12 +85,11 @@ export default function ProfileScreen({ route, navigation }) {
         <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
 
         <View style={styles.profileBar}>
-            <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
-            <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>Maria Santos</Text>
-                <Text style={styles.meta}>ID: BRC-SC-2026-0001</Text>
-                <Text style={styles.meta}>Type: Person with Disability</Text>
-            </View>
+          <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
+          <View style={styles.profileTextWrap}>
+            <Text style={styles.name}>{incident.resident_name}</Text>
+            {!!incident.blood_type && <Text style={styles.meta}>Blood type: {incident.blood_type}</Text>}
+          </View>
         </View>
 
         <Text style={styles.heading1}>Assign Responder</Text>
@@ -26,70 +97,44 @@ export default function ProfileScreen({ route, navigation }) {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Bystander Note</Text>
+        <Text style={[styles.subheading, { fontFamily: 'Poppins_500Medium' }]}>Bystander Note</Text>
         <View style={[styles.headCard, styles.shadow]}>
-          <Text style={styles.scanCardSubtitle}>Optional note submitted by the bystander once the alert is confirmed</Text>
+          <Text style={styles.scanCardSubtitle}>
+            {incident.bystander_notes || 'No note was submitted with this alert.'}
+          </Text>
         </View>
 
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Available Responders</Text>
-        <TouchableOpacity 
-          style={[
-            styles.headCard,
-            styles.shadow,
-            selectedResponder === 'rowendo' && styles.headCardActive,
-          ]}
-          onPress={() => setSelectedResponder('rowendo')}
-        >
-          <Image source={require('../../assets/profile.png')} style={styles.responderPhoto} />
-          <View style={styles.headCardTextWrap}>
-            <Text style={styles.headCardTitle}>Rowendo Carpino</Text>
-            <Text style={[styles.scanCardSubtitle, styles.statusAvailable]}>
-                <FontAwesome5 name="dot-circle" size={12} color="#288928" /> Available
-            </Text>
-          </View>        
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[
-            styles.headCard,
-            styles.shadow,
-            { backgroundColor: '#eee' },
-          ]}
-          onPress={() => setSelectedResponder('jadrick')}
-        >
-          <Image source={require('../../assets/profile.png')} style={styles.responderPhoto} />
-          <View style={styles.headCardTextWrap}>
-            <Text style={styles.headCardTitle}>Jadrick Coast</Text>
-            <Text style={[styles.scanCardSubtitle, styles.statusOnGoing]}>
-                <FontAwesome5 name="dot-circle" size={12} color="#a83232" /> On another incident
-            </Text>
-          </View>        
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[
-            styles.headCard,
-            styles.shadow,
-            { backgroundColor: '#eee' },
-          ]}
-          onPress={() => setSelectedResponder('luther')}
-        >
-          <Image source={require('../../assets/profile.png')} style={styles.responderPhoto} />
-          <View style={styles.headCardTextWrap}>
-            <Text style={styles.headCardTitle}>Luther Magtiban</Text>
-            <Text style={[styles.scanCardSubtitle, styles.statusOffDuty]}>
-                <FontAwesome5 name="dot-circle" size={12} color="#666" /> Off Duty
-            </Text>
-          </View>        
-        </TouchableOpacity>
+        <Text style={[styles.subheading, { fontFamily: 'Poppins_500Medium' }]}>Available Responders</Text>
+        {responders.length === 0 ? (
+          <Text style={styles.emptyText}>No registered responder accounts in your barangay.</Text>
+        ) : (
+          responders.map((responder) => {
+            const selected = selectedResponderId === responder.id;
+            return (
+              <TouchableOpacity
+                key={responder.id}
+                style={[styles.headCard, styles.shadow, selected && styles.headCardActive]}
+                onPress={() => setSelectedResponderId(responder.id)}
+              >
+                <Image source={require('../../assets/profile.png')} style={styles.responderPhoto} />
+                <View style={styles.headCardTextWrap}>
+                  <Text style={styles.headCardTitle}>{responder.full_name}</Text>
+                  <Text style={styles.scanCardSubtitle}>{responder.phone_number || responder.email || 'No contact on file'}</Text>
+                </View>
+                {selected && <FontAwesome5 name="check-circle" size={20} color="#a83232" />}
+              </TouchableOpacity>
+            );
+          })
+        )}
       </ScrollView>
 
       <View style={styles.buttonContent}>
         <TouchableOpacity
-          style={styles.assignButton}
-          onPress={() => navigation.navigate('AlertDetails')}
+          style={[styles.assignButton, !selectedResponderId && styles.assignButtonDisabled]}
+          onPress={handleAssign}
+          disabled={!selectedResponderId || assigning}
         >
-          <Text style={styles.assignButtonText}>Assign Responder</Text>
+          <Text style={styles.assignButtonText}>{assigning ? 'Assigning…' : 'Assign Responder'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -105,9 +150,9 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingTop: 0 },
   buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
   back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 16, marginTop: -16 },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginTop: 10, marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', marginTop: 10, marginBottom: 6 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#888', marginTop: 20 },
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
 
   profileBar: {
@@ -143,49 +188,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  assignButtonDisabled: { opacity: 0.5 },
   assignButtonText: { color: '#a83232', fontSize: 15, fontFamily: 'Poppins_500Medium' },
 
-  scanCard: {
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 6,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  scanCardTitle: { 
-    borderRadius: 10,
-    paddingVertical: 2,
-    paddingHorizontal: 16,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statusOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
-  scanCardTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   scanCardSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
-  scanCardDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#333',
-    marginRight: 2,
-  },
 
   headCard: {
     flexDirection: 'row',
@@ -203,6 +209,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
+  headCardActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' },
   responderPhoto: {
     width: 50,
     height: 50,
@@ -220,9 +227,4 @@ const styles = StyleSheet.create({
   },
   headCardTextWrap: { flex: 1 },
   headCardTitle: { fontSize: 15, fontFamily: 'Poppins_500Medium', marginLeft: 4 },
-  headCardSubtitle: { fontSize: 13, fontFamily: 'Poppins_400Regular', color: '#666' },
-  headCardActive: { borderColor: '#a83232', shadowColor: '#a83232' },
-  statusAvailable: { color: '#288928' },
-  statusOffDuty: { color: '#666' },
-  statusOnGoing: { color: '#a83232' },
 });

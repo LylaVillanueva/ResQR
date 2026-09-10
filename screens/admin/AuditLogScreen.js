@@ -1,8 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api } from '../../lib/api';
 
 const filters = [
   { key: 'all', label: 'All' },
@@ -11,10 +13,62 @@ const filters = [
   { key: 'assign log', label: 'Assign Log' },
 ];
 
+const ACTION_LABELS = {
+  'resident.enrolled': 'New resident enrolled',
+  'resident.updated': 'Resident record updated',
+  'guardian.registered': 'Guardian registered',
+  'incident.created': 'Alert raised',
+  'incident.confirmation_submitted': 'Safety confirmation submitted',
+  'incident.responder_assigned': 'Responder assigned',
+  'incident.resolved': 'Alert resolved',
+  'incident.closed': 'Alert closed',
+  'incident.auto_escalated': 'Alert auto-escalated',
+};
+
+function matchesFilter(action, filterKey) {
+  if (!filterKey || filterKey === 'all') return true;
+  if (filterKey === 'assign log') return action === 'incident.responder_assigned';
+  if (filterKey === 'alert log') return action.startsWith('incident.') && action !== 'incident.responder_assigned';
+  if (filterKey === 'user log') return action.startsWith('resident.') || action.startsWith('guardian.');
+  return true;
+}
+
 export default function AuditLogScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
-  
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setLoading(true);
+      setError(null);
+      api
+        .listAuditLogs()
+        .then((data) => {
+          if (!cancelled) setLogs(data);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const query = searchQuery.trim().toLowerCase();
+  const filteredLogs = logs.filter((log) => {
+    if (!matchesFilter(log.action, activeFilter)) return false;
+    const label = ACTION_LABELS[log.action] || log.action;
+    return !query || label.toLowerCase().includes(query);
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -65,33 +119,30 @@ export default function AuditLogScreen({ navigation }) {
       </View>    
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusAccount]}>Account</Text>
-            <Text style={styles.scanCardTime}>3:29 PM</Text>
-          </View>
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.scanCardSubtitle}>New resident enrolled</Text>
-        </View>
-
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusAccount]}>Responder Assignment</Text>
-            <Text style={styles.scanCardTime}>12:00 PM</Text>
-          </View>
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.scanCardSubtitle}>was assigned to alert [number]</Text>
-        </View>
-
-        <View style={styles.scanCard}>
-          <View style={styles.scanCardTextWrap}>
-            <Text style={[styles.scanCardTitle, styles.statusClosed]}>Alert Closed</Text>
-            <Text style={styles.scanCardTime}>12:00 PM</Text>
-          </View>
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.scanCardSubtitle}>Resolved - Both party confirmed safe</Text>
-        </View>
-
+        {loading ? (
+          <ActivityIndicator style={{ marginVertical: 20 }} color="#a83232" />
+        ) : error ? (
+          <Text style={styles.emptyText}>Couldn't load activity: {error}</Text>
+        ) : filteredLogs.length === 0 ? (
+          <Text style={styles.emptyText}>No activity matches this filter.</Text>
+        ) : (
+          filteredLogs.map((log) => (
+            <View key={log.id} style={styles.scanCard}>
+              <View style={styles.scanCardTextWrap}>
+                <Text style={[styles.scanCardTitle, styles.statusAccount]}>{log.actor_role || 'system'}</Text>
+                <Text style={styles.scanCardTime}>
+                  {new Date(log.created_at).toLocaleString([], {
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+              <Text style={styles.scanCardSubtitle}>{ACTION_LABELS[log.action] || log.action}</Text>
+            </View>
+          ))
+        )}
       </ScrollView>
 
       <View style={styles.buttonContent}>
@@ -114,6 +165,7 @@ const styles = StyleSheet.create({
   heading: { fontSize: 26, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginLeft: 8 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#888', textAlign: 'center', marginTop: 20 },
 
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   auditButton: { alignItems: 'center', padding: 6, marginTop: 8, marginRight: 1 },

@@ -1,11 +1,22 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, Image, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, Image, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api, clearSession } from '../../lib/api';
 
-export default function ProfileScreen({ route, navigation }) {
+export default function SettingsScreen({ navigation, session, setSession }) {
   const [isEnabled, setIsEnabled] = useState(false);
+
+  async function handleLogout() {
+    try {
+      await api.logout();
+    } catch {
+      // best-effort — still clear the local session below either way
+    }
+    await clearSession();
+    setSession(null);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -13,9 +24,9 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={styles.profileBar}>
             <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
             <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>Maria Santos</Text>
-                <Text style={styles.meta}>Role: Official / Admin</Text>
-                <Text style={styles.meta}>Barangay: 206</Text>
+                <Text style={styles.name}>{session?.user?.fullName}</Text>
+                <Text style={styles.meta}>Role: Barangay Official</Text>
+                <Text style={styles.meta}>Barangay: {session?.user?.barangayName || 'Not linked'}</Text>
             </View>
         </View>
         <Text style={styles.heading1}>Settings</Text>
@@ -113,7 +124,7 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={[styles.settingsCard]}>
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>Manage User Role</Text>
               </TouchableOpacity>
@@ -124,7 +135,7 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={[styles.settingsCard]}>
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>Language</Text>
               </TouchableOpacity>
@@ -135,7 +146,7 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={[styles.settingsCard]}>
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>FAQ (Frequently Asked Question)</Text>
               </TouchableOpacity>
@@ -145,7 +156,7 @@ export default function ProfileScreen({ route, navigation }) {
 
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>Report A Problem / Bug</Text>
               </TouchableOpacity>
@@ -154,9 +165,7 @@ export default function ProfileScreen({ route, navigation }) {
 
         <View style={[styles.settingsCard, { backgroundColor: '#f1bdbd', borderColor: '#a83232', marginTop: 20 }]}>
             <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('../LogIn')}
-              >
+              <TouchableOpacity onPress={handleLogout}>
                 <Text style={[styles.settingsSubtitle, { fontFamily: 'Poppins_500Medium', color: '#a83232', textAlign: 'center' }]}>Log out</Text>
               </TouchableOpacity>
             </View>

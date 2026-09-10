@@ -1,19 +1,56 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ScrollView } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, TextInput, Image, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api } from '../../lib/api';
 
 const filters = [
-  { key: 'senior citizen', label: 'Senior' },
-  { key: 'person with disability', label: 'PWD' },
+  { key: 'Senior Citizen', label: 'Senior' },
+  { key: 'Person with Disability', label: 'PWD' },
   { key: 'guardian', label: 'Guardian' },
-  { key: 'responder', label: 'Responder' },
+  { key: 'Responder', label: 'Responder' },
 ];
 
 export default function ResidentScreen({ navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState(null);
+  const [residents, setResidents] = useState([]);
+  const [guardians, setGuardians] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      setLoading(true);
+      setError(null);
+      Promise.all([api.listResidents(), api.listGuardians()])
+        .then(([residentData, guardianData]) => {
+          if (cancelled) return;
+          setResidents(residentData);
+          setGuardians(guardianData);
+        })
+        .catch((err) => {
+          if (!cancelled) setError(err.message);
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
+
+  const query = searchQuery.trim().toLowerCase();
+  const filteredResidents = residents.filter((r) => {
+    if (activeFilter && activeFilter !== 'guardian' && r.resident_type !== activeFilter) return false;
+    return r.full_name.toLowerCase().includes(query) || (r.resident_code || '').toLowerCase().includes(query);
+  });
+  const filteredGuardians = guardians.filter((g) => g.full_name.toLowerCase().includes(query));
+  const showGuardians = activeFilter === 'guardian';
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,24 +83,60 @@ export default function ResidentScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
             ))}
-          </View>  
+          </View>
         </View>
 
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <TouchableOpacity 
-            style={styles.residentCard}
-            onPress={() => navigation.navigate('ProfileScreen')}
-        >
-            <Image source={require('../../assets/profile.png')} style={styles.residentPhoto} />
-            <View style={styles.residentTextWrap}>
-                <Text style={styles.residentName}>Full Name</Text>
-                <Text style={styles.residentMeta}>ID Number</Text>
-            </View>
-            <View style={styles.statusDot} /> 
-        </TouchableOpacity>
+        {loading ? (
+          <ActivityIndicator style={{ marginVertical: 20 }} color="#a83232" />
+        ) : error ? (
+          <Text style={styles.emptyText}>Couldn't load residents: {error}</Text>
+        ) : showGuardians ? (
+          filteredGuardians.length === 0 ? (
+            <Text style={styles.emptyText}>No registered guardian accounts found.</Text>
+          ) : (
+            filteredGuardians.map((guardian) => (
+              <View key={guardian.id} style={styles.residentCard}>
+                <Image source={require('../../assets/profile.png')} style={styles.residentPhoto} />
+                <View style={styles.residentTextWrap}>
+                  <Text style={styles.residentName}>{guardian.full_name}</Text>
+                  <Text style={styles.residentMeta}>{guardian.phone_number || guardian.email || 'No contact on file'}</Text>
+                </View>
+              </View>
+            ))
+          )
+        ) : filteredResidents.length === 0 ? (
+          <Text style={styles.emptyText}>
+            {residents.length === 0 ? 'No residents enrolled in this barangay yet.' : 'No residents match your search.'}
+          </Text>
+        ) : (
+          filteredResidents.map((resident) => (
+            <TouchableOpacity
+              key={resident.id}
+              style={styles.residentCard}
+              onPress={() => navigation.navigate('ProfileScreen', { residentId: resident.id })}
+            >
+              <Image source={require('../../assets/profile.png')} style={styles.residentPhoto} />
+              <View style={styles.residentTextWrap}>
+                <Text style={styles.residentName}>{resident.full_name}</Text>
+                <Text style={styles.residentMeta}>{resident.resident_code || resident.resident_type || 'No ID on file'}</Text>
+              </View>
+              <View
+                style={[
+                  styles.statusDot,
+                  resident.guardian_has_logged_in
+                    ? styles.statusDotLoggedIn
+                    : resident.guardian_id
+                    ? styles.statusDotPending
+                    : styles.statusDotNone,
+                ]}
+              />
+            </TouchableOpacity>
+          ))
+        )}
       </ScrollView>
 
       <View style={styles.buttonContent}>
@@ -89,6 +162,7 @@ const styles = StyleSheet.create({
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginBottom: 10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#888', textAlign: 'center', marginTop: 20 },
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
 
   searchBar: {
@@ -101,7 +175,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 6,
     marginBottom: 16,
-    marginTop: 10
+    marginTop: 10,
   },
   searchInput: {
     flex: 1,
@@ -111,10 +185,10 @@ const styles = StyleSheet.create({
     color: '#333',
   },
 
-  filterBar: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 4, 
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
     marginTop: -10,
     marginBottom: 6,
   },
@@ -138,7 +212,7 @@ const styles = StyleSheet.create({
   },
   filterButtonActive: { backgroundColor: '#ffdcdc', borderWidth: 1, borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 7 },
   filterLabel: { fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold', },
+  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
 
   residentCard: {
     flexDirection: 'row',
@@ -162,7 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     backgroundColor: '#c4c4c4',
     marginRight: 14,
-    },
+  },
   residentTextWrap: { flex: 1 },
   residentName: { fontSize: 15, fontFamily: 'Poppins_500Medium', marginBottom: 2 },
   residentMeta: { fontSize: 13, fontFamily: 'Poppins_400Regular', color: '#666' },
@@ -170,9 +244,11 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#333',
     marginRight: 2,
   },
+  statusDotLoggedIn: { backgroundColor: '#288928' },
+  statusDotPending: { backgroundColor: '#c9a227' },
+  statusDotNone: { backgroundColor: '#bbb' },
   enrollButton: {
     borderWidth: 1,
     borderColor: '#a83232',

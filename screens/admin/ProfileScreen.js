@@ -1,47 +1,133 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
+import QRCode from 'react-native-qrcode-svg';
 import TabBar from '../../component/TabButtons';
+import { api } from '../../lib/api';
+
+const STATUS_LABELS = {
+  active: 'Alert Open',
+  confirmed_safe: 'Alert Closed',
+  confirmed_not_safe: 'Alert Pending',
+  escalated: 'Escalated',
+  assigned: 'Alert Pending',
+  resolved: 'Alert Closed',
+  closed: 'Alert Closed',
+};
+
+function statusStyleKey(status) {
+  if (status === 'active') return 'alertOpen';
+  if (['confirmed_safe', 'resolved', 'closed'].includes(status)) return 'alertClosed';
+  return 'alertPending';
+}
+
+function decisionLabel(decision) {
+  if (decision === 'safe') return 'Safe';
+  if (decision === 'not_safe') return 'Not Safe';
+  return 'Pending';
+}
 
 export default function ProfileScreen({ route, navigation }) {
+  const residentId = route.params?.residentId;
   const [showQR, setShowQR] = useState(false);
-  const resident = route.params?.resident;
-   
-  function viewQR() {
-    setShowQR(true);
+  const [qrData, setQrData] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
+  const [resident, setResident] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!residentId) {
+      setLoading(false);
+      setError('No resident specified.');
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([api.getResident(residentId), api.listResidentHistory(residentId)])
+      .then(([residentData, historyData]) => {
+        if (cancelled) return;
+        setResident(residentData);
+        setHistory(historyData);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [residentId]);
+
+  async function viewQR() {
+    setQrLoading(true);
+    try {
+      const data = await api.generateQr({ residentId });
+      setQrData(data);
+      setShowQR(true);
+    } catch (err) {
+      Alert.alert('Could not generate QR code', err.message);
+    } finally {
+      setQrLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
+          <ActivityIndicator style={{ marginTop: 40 }} color="#a83232" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !resident) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
+          <Text style={styles.emptyText}>Couldn't load this resident{error ? `: ${error}` : '.'}</Text>
+        </View>
+      </SafeAreaView>
+    );
   }
 
   if (showQR) {
     return (
-        <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-            <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
-            <Text style={styles.heading}>QR Card Generated</Text>
+          <Text style={styles.back} onPress={() => setShowQR(false)}>‹ Back</Text>
+          <Text style={styles.heading}>QR Card Generated</Text>
 
-            <View style={styles.qrBox}>
-              <View style={styles.qrPlaceholder}>
-                <Text style={styles.qrPlaceholderText}>QR CODE{'\n'}PLACEHOLDER</Text>
-              </View>
-                
-              <Text style={styles.qrName}>{resident?.name || 'Maria Santos'}</Text>
-              <Text style={styles.qrDetail}>{resident?.id || 'ID: BRG-SC-2026-001'}</Text>
-              <Text style={styles.qrDetail}>{resident?.guardian || 'Guardian: Mang Kanor'}</Text>
-              <Text style={styles.qrDetail}>{resident?.phone || 'Contact: +639XXXXXXXXXX'}</Text>
-              <Text style={styles.qrDetail}>{resident?.barangay || 'Barangay: 206'}</Text>
+          <View style={styles.qrBox}>
+            <View style={styles.qrPlaceholder}>
+              {qrData?.publicScanUrl ? (
+                <QRCode value={qrData.publicScanUrl} size={240} />
+              ) : (
+                <Text style={styles.qrPlaceholderText}>QR CODE{'\n'}UNAVAILABLE</Text>
+              )}
             </View>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={() => { /* download PDF logic goes here */ }}>
-              <Text style={styles.primaryButtonText}>Download PDF</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => setShowQR(false)}
-            >
-              <Text style={styles.secondaryButtonText}>Back to Profile</Text>
-            </TouchableOpacity>
+            <Text style={styles.qrName}>{resident.full_name}</Text>
+            <Text style={styles.qrDetail}>{resident.resident_code}</Text>
+            <Text style={styles.qrDetail}>{resident.guardian_name ? `Guardian: ${resident.guardian_name}` : 'No guardian linked'}</Text>
+          </View>
+
+          <TouchableOpacity style={styles.primaryButton} onPress={() => { /* download PDF logic goes here */ }}>
+            <Text style={styles.primaryButtonText}>Download PDF</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.secondaryButton} onPress={() => setShowQR(false)}>
+            <Text style={styles.secondaryButtonText}>Back to Profile</Text>
+          </TouchableOpacity>
         </View>
-        </SafeAreaView>
+      </SafeAreaView>
     );
   }
 
@@ -51,16 +137,19 @@ export default function ProfileScreen({ route, navigation }) {
         <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
 
         <View style={styles.profileBar}>
-            <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
-            <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>{resident?.name || 'Maria Santos'}</Text>
-                <Text style={styles.meta}>{resident?.id || 'ID: BRC-SC-2026-0001'}</Text>
-                <Text style={styles.meta}>{resident?.role || 'Type: Person with Disability'}</Text>
-            </View>
+          <Image
+            source={resident.photo_url ? { uri: resident.photo_url } : require('../../assets/profile.png')}
+            style={styles.profilePhoto}
+          />
+          <View style={styles.profileTextWrap}>
+            <Text style={styles.name}>{resident.full_name}</Text>
+            {!!resident.resident_code && <Text style={styles.meta}>ID: {resident.resident_code}</Text>}
+            {!!resident.resident_type && <Text style={styles.meta}>Type: {resident.resident_type}</Text>}
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.qrButton} onPress={viewQR}>
-            <Text style={styles.qrButtonText}>View QR Code</Text>
+        <TouchableOpacity style={styles.qrButton} onPress={viewQR} disabled={qrLoading}>
+          <Text style={styles.qrButtonText}>{qrLoading ? 'Generating…' : 'View QR Code'}</Text>
         </TouchableOpacity>
 
         <View style={styles.divider} />
@@ -68,57 +157,39 @@ export default function ProfileScreen({ route, navigation }) {
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.alertCard, styles.alertCardActive]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertOpen, styles.shadow]}>Alert Open</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
+        {history.length === 0 ? (
+          <Text style={styles.emptyText}>No alerts have been raised for this resident yet.</Text>
+        ) : (
+          history.map((incident) => (
+            <View key={incident.id} style={[styles.alertCard, incident.status === 'active' && styles.alertCardActive]}>
+              <View style={styles.alertCardTextWrap}>
+                <Text style={[styles.alertCardTitle, styles[statusStyleKey(incident.status)], styles.shadow]}>
+                  {STATUS_LABELS[incident.status] || incident.status}
+                </Text>
+                <Text style={styles.alertTime}>{new Date(incident.created_at).toLocaleDateString()}</Text>
+              </View>
 
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusPending, styles.shadow]}>Guardian: Pending</Text>
-            <Text style={[styles.statusText, styles.statusPending, styles.shadow]}>Responder: Pending</Text>
-          </View>
+              <Text style={styles.alertSubtitle}>Scanned by a bystander</Text>
 
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-            <Text style={styles.buttonText}>Tap for Full Details</Text>
-            <FontAwesome5 name="caret-down" size={18} color="#245490" />
-          </TouchableOpacity>
-        </View>
-        
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertClosed, styles.shadow]}>Alert Closed</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.alertSubtitle}>Resolved - Both Party Confirmed Safe</Text>
+              <View style={styles.statusRow}>
+                <Text style={[styles.statusText, styles[statusStyleKey(incident.guardian_decision ? 'closed' : 'active')], styles.shadow]}>
+                  Guardian: {decisionLabel(incident.guardian_decision)}
+                </Text>
+                <Text style={[styles.statusText, styles[statusStyleKey(incident.responder_decision ? 'closed' : 'active')], styles.shadow]}>
+                  Responder: {decisionLabel(incident.responder_decision)}
+                </Text>
+              </View>
 
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-            <Text style={styles.buttonText}>Tap for Full Details</Text>
-            <FontAwesome5 name="caret-down" size={18} color="#245490" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={[styles.alertCard]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertPending, styles.shadow]}>Alert Pending</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
-
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusPending, styles.shadow]}>Guardian: Pending</Text>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Responder: Not Safe</Text>
-          </View>
-
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-            <Text style={styles.buttonText}>Tap for Full Details</Text>
-            <FontAwesome5 name="caret-down" size={18} color="#245490" />
-          </TouchableOpacity>
-        </View>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => navigation.navigate('AlertDetails', { incidentId: incident.id })}
+              >
+                <Text style={styles.buttonText}>Tap for Full Details</Text>
+                <FontAwesome5 name="caret-down" size={18} color="#245490" />
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
       </ScrollView>
 
       <TabBar />
@@ -134,7 +205,7 @@ const styles = StyleSheet.create({
   back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 16, marginTop: -16 },
   heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
   heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
+  emptyText: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#888', marginTop: 20 },
 
   profileBar: {
     flexDirection: 'row',
@@ -192,12 +263,12 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   alertCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  alertCardTitle: { 
+  alertCardTitle: {
     borderRadius: 10,
     paddingVertical: 4,
     paddingHorizontal: 16,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
+    fontSize: 15,
+    fontFamily: 'Poppins_600SemiBold',
     marginBottom: 2,
   },
   button: {
@@ -211,27 +282,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: '#d3e5f8',
   },
-  buttonWrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  buttonSafe: {
-    flex: 1,
-    justifyContent: 'center',
-    borderColor: '#288928',
-    backgroundColor: '#a1fbaa',
-    marginRight: 6,
-  },
-  buttonNotSafe: {
-    flex: 1,
-    justifyContent: 'center',
-    borderColor: '#a83232',
-    backgroundColor: '#fbd1d1',
-    marginLeft: 6,
-  },
   buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  buttonTextWrap: { flexDirection: 'row', justifyContent: 'space-between' },
-  alertCardActive: { 
+  alertCardActive: {
     borderColor: '#a83232',
     backgroundColor: '#fff',
     shadowColor: '#a83232',
@@ -240,17 +292,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
+  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' },
+  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa' },
   alertTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   alertSubtitle: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, marginBottom: 10 },
-  detailButton: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#245490' },
   statusRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 8,
-    marginBottom: 12
+    marginBottom: 12,
   },
   statusText: {
     flex: 1,
@@ -264,9 +315,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#666',
   },
-  statusOpen: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa', },
+
+  shadow: {
+    shadowColor: '#aaa',
+    shadowOffset: { width: 7, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
 
   primaryButton: {
     borderRadius: 10,
@@ -291,8 +346,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   secondaryButtonText: { color: '#c12b2b', fontSize: 16, fontFamily: 'Poppins_400Regular' },
-
-  pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
 
   qrBox: {
     borderWidth: 1,

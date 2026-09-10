@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
-import { api } from '../lib/api';
+import QRCode from 'react-native-qrcode-svg';
+import { api } from '../../lib/api';
 
 const MONTHS = [
   { value: '01', label: 'January' },
@@ -34,6 +35,10 @@ function daysInMonth(month, year) {
 export default function EnrollNewResident({ navigation, session }) {
   const [step, setStep] = useState(1); // 1 = page1, 2 = page2, 3 = qr result
   const [loading, setLoading] = useState(false);
+  const [createdResident, setCreatedResident] = useState(null);
+  const [createdQr, setCreatedQr] = useState(null);
+  const [qrError, setQrError] = useState(null);
+  const [generatingQr, setGeneratingQr] = useState(false);
 
   // A resident is always enrolled under the registering official's own
   // barangay (residents.barangay_id is set server-side from req.user, not
@@ -83,6 +88,9 @@ export default function EnrollNewResident({ navigation, session }) {
   }
 
   const isGuardianRole = form.role === 'Guardian';
+  // Responder/Barangay Official aren't wards — they get their own login
+  // account instead of a guardian (see staffAccount on the backend).
+  const isStaffType = form.role === 'Responder' || form.role === 'Barangay Official';
   // '' (unset) | 'none' | 'existing' | 'new' — a resident holds at most
   // one guardian_id, so this is a single choice, not a multi-select.
   const [guardianMode, setGuardianMode] = useState('');
@@ -186,23 +194,77 @@ export default function EnrollNewResident({ navigation, session }) {
     <Picker.Item label="Guardian" value="Guardian" />
   </Picker>
 
-  function handleEnroll() {
+  // The QR is only generated for an actual resident (senior/PWD) after
+  // they've been created — staff and guardian registrations don't get one.
+  async function generateQrForResident(residentId) {
+    setGeneratingQr(true);
+    setQrError(null);
+    try {
+      const qr = await api.generateQr({ residentId });
+      setCreatedQr(qr);
+    } catch (err) {
+      setQrError(err.message);
+    } finally {
+      setGeneratingQr(false);
+    }
+  }
+
+  async function handleEnroll() {
     // Registering a Guardian assigns wards instead of asking about a
     // guardian; a resident must first say whether it has one at all.
-    if (!isGuardianRole) {
+    if (!isGuardianRole && !isStaffType) {
       if (!guardianMode) return;
       if (guardianMode === 'existing' && !selectedGuardianId) return;
       if (guardianMode === 'new' && (!form.guardianName || !form.guardianContact || !form.relationship)) {
         return;
       }
     }
+    if (isStaffType && !form.guardianContact && !form.guardianEmail) return;
+
     setLoading(true);
-    // --- MOCK ENROLL / QR GENERATION ---
-    // Replace later with actual API call to create the resident + generate QR
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const fullName = [form.firstName.trim(), form.lastName.trim()].filter(Boolean).join(' ');
+
+      if (isGuardianRole) {
+        const guardian = await api.registerGuardian({
+          fullName,
+          phone: form.guardianContact ? `+63${form.guardianContact}` : undefined,
+          email: form.guardianEmail || undefined,
+          residentIds: selectedWardIds,
+        });
+        setCreatedResident(guardian);
+      } else {
+        const resident = await api.enrollResident({
+          fullName,
+          residentType: form.role || undefined,
+          dateOfBirth: form.birthdate || undefined,
+          homeAddress: form.homeAddress || undefined,
+          guardianId: guardianMode === 'existing' ? selectedGuardianId : undefined,
+          newGuardian:
+            guardianMode === 'new'
+              ? {
+                  fullName: form.guardianName.trim(),
+                  relation: form.relationship,
+                  phone: form.guardianContact ? `+63${form.guardianContact}` : undefined,
+                  email: form.guardianEmail || undefined,
+                }
+              : undefined,
+          staffAccount: isStaffType
+            ? {
+                phone: form.guardianContact ? `+63${form.guardianContact}` : undefined,
+                email: form.guardianEmail || undefined,
+              }
+            : undefined,
+        });
+        setCreatedResident(resident);
+        if (!isStaffType) await generateQrForResident(resident.id);
+      }
       setStep(3);
-    }, 800);
+    } catch (err) {
+      Alert.alert('Enrollment Failed', err.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function ProgressBar({ activeCount }) {
@@ -214,8 +276,62 @@ export default function EnrollNewResident({ navigation, session }) {
     );
   }
 
+  function resetEnrollmentForm() {
+    setForm({
+      role: '',
+      firstName: '',
+      lastName: '',
+      birthdate: '',
+      barangay: officialBarangayName ?? '',
+      guardianName: '',
+      relationship: '',
+      guardianContact: '',
+      guardianEmail: '',
+    });
+    resetBirthdate();
+    resetGuardianStep();
+    setCreatedResident(null);
+    setCreatedQr(null);
+    setQrError(null);
+    setStep(1);
+  }
+
+  // ---------------- STEP 3: GUARDIAN/STAFF RESULT (no QR) ----------------
+  if (step === 3 && (isGuardianRole || isStaffType)) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text style={styles.back} onPress={() => navigation.navigate('ResidentScreen')}>
+            ‹ Done
+          </Text>
+          <Text style={styles.heading}>Account Created</Text>
+
+          <View style={styles.qrBox}>
+            <Text style={styles.qrName}>{createdResident?.full_name}</Text>
+            <Text style={styles.qrDetail}>{isGuardianRole ? 'Guardian' : form.role}</Text>
+            <Text style={styles.qrDetail}>
+              {form.guardianContact ? `+63${form.guardianContact}` : form.guardianEmail}
+            </Text>
+            {isGuardianRole && (
+              <Text style={styles.qrDetail}>
+                {selectedWardIds.length} ward{selectedWardIds.length === 1 ? '' : 's'} assigned
+              </Text>
+            )}
+            <Text style={styles.qrDetail}>{officialBarangayName}</Text>
+          </View>
+
+          <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate('Home')}>
+            <Text style={styles.buttonText}>Done</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.pdfButton, styles.shadow]} onPress={resetEnrollmentForm}>
+            <Text style={styles.pdfButtonText}>Enroll Another</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // ---------------- STEP 3: QR RESULT ----------------
-  // sample result
   if (step === 3) {
     return (
       <SafeAreaView style={styles.container}>
@@ -227,37 +343,37 @@ export default function EnrollNewResident({ navigation, session }) {
 
         <View style={styles.qrBox}>
           <View style={styles.qrPlaceholder}>
-            <Text style={styles.qrPlaceholderText}>QR CODE{'\n'}PLACEHOLDER</Text>
+            {generatingQr ? (
+              <ActivityIndicator color="#a83232" />
+            ) : createdQr?.publicScanUrl ? (
+              <QRCode
+                value={createdQr.publicScanUrl}
+                size={240}
+                ecl={(createdQr.error_correction || 'Q').toUpperCase()}
+              />
+            ) : (
+              <>
+                <Text style={styles.qrPlaceholderText}>
+                  {qrError ? `QR generation failed:\n${qrError}` : 'QR CODE\nUNAVAILABLE'}
+                </Text>
+                <TouchableOpacity
+                  style={styles.qrRetryButton}
+                  onPress={() => generateQrForResident(createdResident.id)}
+                >
+                  <Text style={styles.qrRetryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
-          <Text style={styles.qrName}>{form.fullName || 'NAME'}</Text>
-          <Text style={styles.qrDetail}>{form.ID || 'ID: BRG-SC-2026-001'}</Text>
-          <Text style={styles.qrDetail}>{form.guardian || 'Guardian: Mang Kanor'}</Text>
-          <Text style={styles.qrDetail}>{form.phone ? `+63${form.phone}` : 'Contact: +639XXXXXXXXXX'}</Text>
-          <Text style={styles.qrDetail}>{form.brgy || 'Barangay: 206'}</Text>
+          <Text style={styles.qrName}>{createdResident?.full_name}</Text>
+          <Text style={styles.qrDetail}>{createdResident?.resident_code}</Text>
+          <Text style={styles.qrDetail}>{officialBarangayName}</Text>
         </View>
 
         <TouchableOpacity style={[styles.button, styles.shadow]} onPress={() => navigation.navigate('Home')}>
           <Text style={styles.buttonText}>Save & Print QR</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.pdfButton, styles.shadow]}
-          onPress={() => {
-            setForm({
-              role: '',
-              firstName: '',
-              lastName: '',
-              birthdate: '',
-              barangay: officialBarangayName ?? '',
-              guardianName: '',
-              relationship: '',
-              guardianContact: '',
-              guardianEmail: '',
-            });
-            resetBirthdate();
-            resetGuardianStep();
-            setStep(1);
-          }}
-        >
+        <TouchableOpacity style={[styles.pdfButton, styles.shadow]} onPress={resetEnrollmentForm}>
           <Text style={styles.pdfButtonText}>Download PDF</Text>
         </TouchableOpacity>
         </View>
@@ -415,6 +531,61 @@ export default function EnrollNewResident({ navigation, session }) {
                 No wards selected yet — you can also register this guardian first and assign wards later.
               </Text>
             )}
+
+            <Text style={[styles.fieldLabel, { marginTop: 10 }]}>Guardian's Phone Number</Text>
+            <View style={styles.phoneRow}>
+              <View style={styles.countryCode}>
+                <Text style={styles.countryCodeText}>+63</Text>
+              </View>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="9XX-XXX-XXXX"
+                keyboardType="number-pad"
+                maxLength={10}
+                value={form.guardianContact}
+                onChangeText={(v) => updateField('guardianContact', v.replace(/[^0-9]/g, ''))}
+              />
+            </View>
+            <Field
+              label="Guardian's Email"
+              placeholder="name@example.com"
+              value={form.guardianEmail}
+              onChangeText={(v) => updateField('guardianEmail', v.trim())}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </>
+        ) : isStaffType ? (
+          <>
+            <Text style={styles.subheading}>step 2 : Account Information</Text>
+            <ProgressBar activeCount={step} />
+            <Text style={styles.noGuardianNote}>
+              {form.role} accounts don't need a guardian — they're the one who will use the app, so we need their
+              own phone number and/or email to create their login.
+            </Text>
+
+            <Text style={styles.fieldLabel}>Enter Phone Number</Text>
+            <View style={styles.phoneRow}>
+              <View style={styles.countryCode}>
+                <Text style={styles.countryCodeText}>+63</Text>
+              </View>
+              <TextInput
+                style={styles.phoneInput}
+                placeholder="9XX-XXX-XXXX"
+                keyboardType="number-pad"
+                maxLength={10}
+                value={form.guardianContact}
+                onChangeText={(v) => updateField('guardianContact', v.replace(/[^0-9]/g, ''))}
+              />
+            </View>
+            <Field
+              label="Enter Email"
+              placeholder="name@example.com"
+              value={form.guardianEmail}
+              onChangeText={(v) => updateField('guardianEmail', v.trim())}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
           </>
         ) : (
           <>
@@ -772,7 +943,9 @@ const styles = StyleSheet.create({
     marginBottom: 25,
     backgroundColor: '#f2f2f2',
   },
-  qrPlaceholderText: { textAlign: 'center', color: '#999', fontSize: 13, fontFamily: 'Poppins_500Medium' },
+  qrPlaceholderText: { textAlign: 'center', color: '#999', fontSize: 13, fontFamily: 'Poppins_500Medium', marginBottom: 12 },
+  qrRetryButton: { borderWidth: 1, borderColor: '#a83232', borderRadius: 8, paddingVertical: 8, paddingHorizontal: 20 },
+  qrRetryButtonText: { color: '#a83232', fontSize: 14, fontFamily: 'Poppins_500Medium' },
   qrName: { fontSize: 24, fontFamily: 'Poppins_500Medium', marginBottom: 6 },
   qrDetail: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#333', textAlign: 'center', marginBottom: -2 },
 });
