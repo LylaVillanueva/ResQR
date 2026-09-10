@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 
@@ -13,11 +13,19 @@ export default function ScannerScreen({ navigation }) {
     }
   }, [permission]);
 
+  // The scanned QR encodes the public scan URL (.../resident/:residentId)
+  // — pull the id back out and open that resident's profile directly.
   function handleBarcodeScanned({ data }) {
     if (scanned) return;
     setScanned(true);
-    // Replace later: look up resident by scanned QR value (data), then navigate to web
-    console.log('Scanned:', data);
+    const match = data.match(/resident\/([^/?#]+)/);
+    if (match) {
+      navigation.navigate('ProfileScreen', { residentId: match[1] });
+    } else {
+      Alert.alert('Unrecognized QR code', 'This doesn\'t look like a ResQR resident code.', [
+        { text: 'OK', onPress: () => setScanned(false) },
+      ]);
+    }
   }
 
   return (

@@ -1,25 +1,35 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { api } from '../../lib/api';
 
 export default function ConfirmationScreen({ route, navigation }) {
-  const status = route.params?.status;
-  const resident = route.params?.resident || { name: 'Sanchez Santos', id: 'BRG-SC-2026-0001' };
+  const incidentId = route.params?.incidentId;
+  const decision = route.params?.decision; // 'safe' | 'not_safe'
+  const residentName = route.params?.residentName;
 
   const [confirmed, setConfirmed] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const isSafe = status === 'Safe';
+  const isSafe = decision === 'safe';
 
-  function handleConfirm() {
-    // Replace later with real Supabase update (write guardian/responder confirmation)
-    setConfirmed(true);
+  async function handleConfirm() {
+    setSubmitting(true);
+    try {
+      await api.submitIncidentConfirmation(incidentId, { decision });
+      setConfirmed(true);
+    } catch (err) {
+      Alert.alert('Could not submit', err.message);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const bullets = isSafe
     ? [
         'This will be recorded as your confirmation.',
-        'The alert will remain open until the responder also confirms.',
+        'The alert stays open until the responder also confirms.',
         'You can still view the alert status in your alerts list.',
       ]
     : [
@@ -36,33 +46,25 @@ export default function ConfirmationScreen({ route, navigation }) {
             <FontAwesome5 name={isSafe ? 'check' : 'exclamation'} size={55} color="#fff" />
           </View>
 
-          <Text style={styles.subheading}>
-            {isSafe ? 'Marked as Safe' : 'Alert Escalated'}
-          </Text>
+          <Text style={styles.subheading}>{isSafe ? 'Marked as Safe' : 'Alert Escalated'}</Text>
           <Text style={styles.subheading2}>
-            {isSafe
-              ? 'Your confirmation has been submitted.'
-              : 'Barangay has been notified as high priority.'}
+            {isSafe ? 'Your confirmation has been submitted.' : 'Barangay has been notified as high priority.'}
           </Text>
 
           <View style={styles.residentCard}>
             <Image source={require('../../assets/profile.png')} style={styles.residentPhoto} />
             <View style={styles.residentTextWrap}>
-                <Text style={styles.residentName}>{resident.name}</Text>
-                <Text style={styles.residentMeta}>ID: {resident.id}</Text>
+              <Text style={styles.residentName}>{residentName}</Text>
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.button, styles.blueButton, {marginBottom: 8}]}
-            onPress={() => navigation.navigate('AlertDetails')}
+            style={[styles.button, styles.blueButton, { marginBottom: 8 }]}
+            onPress={() => navigation.navigate('AlertDetails', { incidentId })}
           >
             <Text style={[styles.buttonText, styles.blueText]}>View Alert Status</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => navigation.navigate('Home')}
-          >
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
             <Text style={styles.buttonText}>Back to Home</Text>
           </TouchableOpacity>
         </View>
@@ -74,12 +76,11 @@ export default function ConfirmationScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.heading1}>
-          Are you sure you want to {isSafe ? 'mark' : 'mark'} this resident as {isSafe ? 'safe' : 'Not Safe'}?
+          Are you sure you want to mark this resident as {isSafe ? 'safe' : 'Not Safe'}?
         </Text>
 
         <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
-        <Text style={styles.subheading}>{resident.name}</Text>
-        <Text style={styles.subheading1}>ID: {resident.id}</Text>
+        <Text style={styles.subheading}>{residentName}</Text>
 
         <View style={styles.bulletBox}>
           {bullets.map((line, i) => (
@@ -100,12 +101,17 @@ export default function ConfirmationScreen({ route, navigation }) {
         <TouchableOpacity
           style={[styles.confirmButton, isSafe ? styles.confirmButtonSafe : styles.confirmButtonNotSafe]}
           onPress={handleConfirm}
+          disabled={submitting}
         >
-          <Text style={[styles.confirmButtonText, isSafe ? styles.safeText : styles.notSafeText]}>
-            {isSafe ? 'Confirm Safe' : 'Confirm Not Safe'}
-          </Text>
+          {submitting ? (
+            <ActivityIndicator color={isSafe ? '#288928' : '#a83232'} />
+          ) : (
+            <Text style={[styles.confirmButtonText, isSafe ? styles.safeText : styles.notSafeText]}>
+              {isSafe ? 'Confirm Safe' : 'Confirm Not Safe'}
+            </Text>
+          )}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.goBack()} disabled={submitting}>
           <Text style={styles.buttonText}>Cancel</Text>
         </TouchableOpacity>
       </View>
@@ -116,10 +122,8 @@ export default function ConfirmationScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { flex: 1, alignItems: 'center', padding: 24 },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
-  heading1: { fontSize: 18, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: 20, marginBottom: 20, textAlign: 'center'},
+  heading1: { fontSize: 18, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: 20, marginBottom: 20, textAlign: 'center' },
   subheading: { fontSize: 20, fontFamily: 'Poppins_700Bold', textAlign: 'center', marginBottom: -4 },
-  subheading1: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20, textAlign: 'center' },
   subheading2: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginBottom: 24 },
 
   profilePhoto: {
@@ -147,7 +151,7 @@ const styles = StyleSheet.create({
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingVertical: 4
+    paddingVertical: 4,
   },
   bulletIcon: { marginRight: 14, marginTop: 12 },
   bulletText: { flex: 1, fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#333' },
@@ -171,7 +175,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  confirmButtonSafe: { borderColor: '#288928', backgroundColor: '#a1fbaa', },
+  confirmButtonSafe: { borderColor: '#288928', backgroundColor: '#a1fbaa' },
   confirmButtonNotSafe: { borderColor: '#a83232', backgroundColor: '#fbd1d1' },
   confirmButtonText: { fontFamily: 'Poppins_500Medium', fontSize: 16 },
   safeText: { color: '#288928' },
@@ -195,7 +199,6 @@ const styles = StyleSheet.create({
   buttonText: { color: '#333', fontFamily: 'Poppins_500Medium', fontSize: 16 },
   blueText: { color: '#245490' },
 
-  // Result screen
   centerContent: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   resultIconWrap: {
     width: 90,
@@ -233,5 +236,4 @@ const styles = StyleSheet.create({
   },
   residentTextWrap: { flex: 1 },
   residentName: { fontSize: 15, fontFamily: 'Poppins_500Medium', marginBottom: 2 },
-  residentMeta: { fontSize: 13, fontFamily: 'Poppins_400Regular', color: '#666' },
 });
