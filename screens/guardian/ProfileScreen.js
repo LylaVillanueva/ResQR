@@ -100,13 +100,11 @@ export default function ProfileScreen({ route, navigation }) {
         </View>
 
         <View style={styles.divider} />
-        <Text style={styles.heading1}>Medical Information</Text>
+        <Text style={styles.heading1}>Information</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <View style={styles.infoCard}>
-          <InfoRow label="Blood Type" value={resident.blood_type} />
-          <InfoRow label="Allergies" value={resident.allergies} />
           <InfoRow label="Medical Notes" value={resident.medical_notes} />
           <InfoRow label="Home Address" value={resident.home_address} />
           <InfoRow label="Landmark" value={resident.landmark_notes} />

@@ -9,8 +9,7 @@ import { api } from '../../lib/api';
 const filters = [
   { key: 'all', label: 'All' },
   { key: 'confirmation', label: 'Confirmation' },
-  { key: 'escalated', label: 'Escalated' },
-  { key: 'scan', label: 'Scan' },
+  { key: 'profile', label: 'Profile' },
 ];
 
 const ACTION_LABELS = {
@@ -27,8 +26,7 @@ const ACTION_LABELS = {
 function matchesFilter(action, filterKey) {
   if (!filterKey || filterKey === 'all') return true;
   if (filterKey === 'confirmation') return action === 'incident.confirmation_submitted';
-  if (filterKey === 'escalated') return action === 'incident.auto_escalated';
-  if (filterKey === 'scan') return action === 'incident.created';
+  if (filterKey === 'profile') return action === 'resident.updated';
   return true;
 }
 
@@ -74,7 +72,7 @@ export default function AuditLogScreen({ navigation }) {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.heading}>Activity Log</Text>
-            <Text style={styles.subheading /*eme eme lang this pakichange*/}>View alert log & user activities</Text>
+            <Text style={styles.subheading}>View your guardian activity history</Text>
           </View>
       
           <TouchableOpacity

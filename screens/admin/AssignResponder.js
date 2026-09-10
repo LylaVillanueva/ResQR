@@ -88,7 +88,6 @@ export default function AssignResponder({ route, navigation }) {
           <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
           <View style={styles.profileTextWrap}>
             <Text style={styles.name}>{incident.resident_name}</Text>
-            {!!incident.blood_type && <Text style={styles.meta}>Blood type: {incident.blood_type}</Text>}
           </View>
         </View>
 

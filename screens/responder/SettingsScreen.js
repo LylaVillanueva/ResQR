@@ -1,11 +1,50 @@
 import React, { useState } from 'react';
-import { Text, View, StyleSheet, Image, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import { Text, View, StyleSheet, Image, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { api, clearSession } from '../../lib/api';
 
-export default function ProfileScreen({ route, navigation }) {
-  const [isEnabled, setIsEnabled] = useState(false);
+const NOTIFICATION_SETTINGS = [
+  { key: 'push', label: 'Push Notification' },
+  { key: 'alertSound', label: 'Emergency Alert Sound' },
+  { key: 'assignedTask', label: 'Assigned Task Notification' },
+];
+
+export default function SettingsScreen({ navigation, session, setSession }) {
+  // Defaults on — missing an assigned task is the one thing this app
+  // exists to prevent.
+  const [notifications, setNotifications] = useState({ push: true, alertSound: true, assignedTask: true });
+  const [cameraEnabled, setCameraEnabled] = useState(true);
+
+  function handleNotificationToggle(key, label, nextValue) {
+    if (nextValue) {
+      setNotifications((prev) => ({ ...prev, [key]: true }));
+      return;
+    }
+    Alert.alert(
+      `Turn off "${label}"?`,
+      'You may miss an assigned task if this is off. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Turn Off',
+          style: 'destructive',
+          onPress: () => setNotifications((prev) => ({ ...prev, [key]: false })),
+        },
+      ]
+    );
+  }
+
+  async function handleLogout() {
+    try {
+      await api.logout();
+    } catch {
+      // best-effort — still clear the local session below either way
+    }
+    await clearSession();
+    setSession(null);
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -13,9 +52,9 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={styles.profileBar}>
             <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
             <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>Rene Baterbonia</Text>
+                <Text style={styles.name}>{session?.user?.fullName}</Text>
                 <Text style={styles.meta}>Role: Responder</Text>
-                <Text style={styles.meta}>Barangay: 206</Text>
+                <Text style={styles.meta}>Barangay: {session?.user?.barangayName || 'Not linked'}</Text>
             </View>
         </View>
         <Text style={styles.heading1}>Settings</Text>
@@ -25,78 +64,44 @@ export default function ProfileScreen({ route, navigation }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Notification Settings</Text>
         <View style={[styles.settingsCard]}>
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Push Notification</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Emergency Alert Sound</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Assigned Task Notification</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
+          {NOTIFICATION_SETTINGS.map((setting, index) => (
+            <React.Fragment key={setting.key}>
+              <View style={[styles.settingsWrap]}>
+                <Text style={styles.settingsSubtitle}>{setting.label}</Text>
+
+                <Switch
+                  value={notifications[setting.key]}
+                  onValueChange={(value) => handleNotificationToggle(setting.key, setting.label, value)}
+                  trackColor={{ false: '#ccc', true: '#fbd1d1' }}
+                  thumbColor={notifications[setting.key] ? '#a83232' : '#f4f3f4'}
+                  style={[styles.switch]}
+                />
+              </View>
+              {index < NOTIFICATION_SETTINGS.length - 1 && <View style={[styles.divider, {marginBottom: 0}]} />}
+            </React.Fragment>
+          ))}
         </View>
 
         <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Camera Settings</Text>
         <View style={[styles.settingsCard]}>
           <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Allow Camera for QR Scan</Text>                  
-        
+            <Text style={styles.settingsSubtitle}>Allow Camera for QR Scan</Text>
+
             <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
+              value={cameraEnabled}
+              onValueChange={setCameraEnabled}
               trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
+              thumbColor={cameraEnabled ? '#a83232' : '#f4f3f4'}
               style={[styles.switch]}
             />
           </View>
-        </View>
-
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>User Access Management</Text>
-        <View style={[styles.settingsCard]}>
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={styles.settingsSubtitle}>Manage User Role</Text>
-              </TouchableOpacity>
-            </View>
         </View>
 
         <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Accessibility</Text>
         <View style={[styles.settingsCard]}>
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>Language</Text>
               </TouchableOpacity>
@@ -107,7 +112,7 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={[styles.settingsCard]}>
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>FAQ (Frequently Asked Question)</Text>
               </TouchableOpacity>
@@ -117,7 +122,7 @@ export default function ProfileScreen({ route, navigation }) {
 
             <View style={styles.buttonContent}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('')}
+                onPress={() => Alert.alert('Coming soon', 'This feature is not available yet.')}
               >
                 <Text style={styles.settingsSubtitle}>Report A Problem / Bug</Text>
               </TouchableOpacity>
@@ -126,9 +131,7 @@ export default function ProfileScreen({ route, navigation }) {
 
         <View style={[styles.settingsCard, { backgroundColor: '#f1bdbd', borderColor: '#a83232', marginTop: 20 }]}>
             <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
+              <TouchableOpacity onPress={handleLogout}>
                 <Text style={[styles.settingsSubtitle, { fontFamily: 'Poppins_500Medium', color: '#a83232', textAlign: 'center' }]}>Log out</Text>
               </TouchableOpacity>
             </View>

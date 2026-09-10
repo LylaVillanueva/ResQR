@@ -92,7 +92,6 @@ export default function AlertDetails({ route, navigation }) {
           <View style={styles.profileTextWrap}>
             <Text style={styles.name}>{incident.resident_name}</Text>
             <Text style={styles.meta}>{STATUS_LABELS[incident.status] || incident.status}</Text>
-            {!!incident.blood_type && <Text style={styles.meta}>Blood type: {incident.blood_type}</Text>}
           </View>
         </View>
 
