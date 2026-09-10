@@ -153,7 +153,7 @@ export default function ProfileScreen({ route, navigation }) {
         </TouchableOpacity>
 
         <View style={styles.divider} />
-        <Text style={styles.heading1}>Scan History</Text>
+        <Text style={styles.heading1}>Alert History</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -161,7 +161,12 @@ export default function ProfileScreen({ route, navigation }) {
           <Text style={styles.emptyText}>No alerts have been raised for this resident yet.</Text>
         ) : (
           history.map((incident) => (
-            <View key={incident.id} style={[styles.alertCard, incident.status === 'active' && styles.alertCardActive]}>
+            <TouchableOpacity
+              key={incident.id}
+              activeOpacity={0.7}
+              style={[styles.alertCard, incident.status === 'active' && styles.alertCardActive]}
+              onPress={() => navigation.navigate('AlertDetails', { incidentId: incident.id })}
+            >
               <View style={styles.alertCardTextWrap}>
                 <Text style={[styles.alertCardTitle, styles[statusStyleKey(incident.status)], styles.shadow]}>
                   {STATUS_LABELS[incident.status] || incident.status}
@@ -180,14 +185,10 @@ export default function ProfileScreen({ route, navigation }) {
                 </Text>
               </View>
 
-              <TouchableOpacity
-                style={styles.button}
-                onPress={() => navigation.navigate('AlertDetails', { incidentId: incident.id })}
-              >
-                <Text style={styles.buttonText}>Tap for Full Details</Text>
-                <FontAwesome5 name="caret-down" size={18} color="#245490" />
-              </TouchableOpacity>
-            </View>
+              <Text style={styles.tapHint}>
+                Tap for full details <FontAwesome5 name="caret-right" size={12} color="#245490" />
+              </Text>
+            </TouchableOpacity>
           ))
         )}
       </ScrollView>
@@ -271,18 +272,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
     marginBottom: 2,
   },
-  button: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#245490',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: '#d3e5f8',
-  },
-  buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
+  tapHint: { fontSize: 13, fontFamily: 'Poppins_500Medium', color: '#245490', marginTop: 4 },
   alertCardActive: {
     borderColor: '#a83232',
     backgroundColor: '#fff',

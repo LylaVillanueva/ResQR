@@ -122,8 +122,19 @@ export default function AlertScreen({ navigation }) {
         ) : (
           filteredIncidents.map((incident) => {
             const isActive = incident.status === 'active';
+            const needsAssignment = !incident.assigned_responder_id;
             return (
-              <View key={incident.id} style={[styles.alertCard, isActive && styles.alertCardActive]}>
+              <TouchableOpacity
+                key={incident.id}
+                activeOpacity={0.7}
+                style={[styles.alertCard, isActive && styles.alertCardActive]}
+                onPress={() =>
+                  navigation.navigate(
+                    needsAssignment ? 'AssignResponder' : 'AlertDetails',
+                    { incidentId: incident.id }
+                  )
+                }
+              >
                 <View style={styles.alertCardTextWrap}>
                   <Text style={[styles.alertCardTitle, styles[statusStyleKey(incident.status)], styles.shadow]}>
                     {STATUS_LABELS[incident.status] || incident.status}
@@ -148,26 +159,11 @@ export default function AlertScreen({ navigation }) {
                   </Text>
                 </View>
 
-                <View style={styles.buttonWrap}>
-                  {!incident.assigned_responder_id ? (
-                    <TouchableOpacity
-                      style={styles.button}
-                      onPress={() => navigation.navigate('AssignResponder', { incidentId: incident.id })}
-                    >
-                      <Text style={styles.buttonText}>Assign Responder</Text>
-                      <FontAwesome5 name="caret-down" size={18} color="#245490" />
-                    </TouchableOpacity>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.button}
-                      onPress={() => navigation.navigate('AlertDetails', { incidentId: incident.id })}
-                    >
-                      <Text style={styles.buttonText}>Tap for Full Details</Text>
-                      <FontAwesome5 name="caret-down" size={18} color="#245490" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+                <Text style={styles.tapHint}>
+                  {needsAssignment ? 'Tap to assign a responder' : 'Tap for full details'}
+                  <FontAwesome5 name="caret-right" size={12} color="#245490" />
+                </Text>
+              </TouchableOpacity>
             );
           })
         )}
@@ -251,19 +247,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_600SemiBold',
     marginBottom: 2,
   },
-  button: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#245490',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: '#d3e5f8',
-  },
-  buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  buttonWrap: { flexDirection: 'row', justifyContent: 'space-between' },
+  tapHint: { fontSize: 13, fontFamily: 'Poppins_500Medium', color: '#245490', marginTop: 4, marginLeft: 8 },
   alertCardActive: {
     borderColor: '#a83232',
     backgroundColor: '#fff',

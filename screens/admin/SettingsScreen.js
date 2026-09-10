@@ -5,8 +5,44 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
 import { api, clearSession } from '../../lib/api';
 
+const NOTIFICATION_SETTINGS = [
+  { key: 'push', label: 'Push Notification' },
+  { key: 'alertSound', label: 'Emergency Alert Sound' },
+  { key: 'newAlert', label: 'New Emergency Alert' },
+  { key: 'assignmentUpdate', label: 'Responder Assignment Update' },
+  { key: 'escalatedAlert', label: 'Escalated Alert Notification' },
+];
+
 export default function SettingsScreen({ navigation, session, setSession }) {
-  const [isEnabled, setIsEnabled] = useState(false);
+  // Defaults on — this app's whole purpose is emergency alerts, so
+  // starting these off would mean missing one by default.
+  const [notifications, setNotifications] = useState({
+    push: true,
+    alertSound: true,
+    newAlert: true,
+    assignmentUpdate: true,
+    escalatedAlert: true,
+  });
+  const [cameraEnabled, setCameraEnabled] = useState(true);
+
+  function handleNotificationToggle(key, label, nextValue) {
+    if (nextValue) {
+      setNotifications((prev) => ({ ...prev, [key]: true }));
+      return;
+    }
+    Alert.alert(
+      `Turn off "${label}"?`,
+      "You may miss a resident's emergency alert if this is off. Are you sure?",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Turn Off',
+          style: 'destructive',
+          onPress: () => setNotifications((prev) => ({ ...prev, [key]: false })),
+        },
+      ]
+    );
+  }
 
   async function handleLogout() {
     try {
@@ -36,85 +72,34 @@ export default function SettingsScreen({ navigation, session, setSession }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Notification Settings</Text>
         <View style={[styles.settingsCard]}>
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Push Notification</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Emergency Alert Sound</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
+          {NOTIFICATION_SETTINGS.map((setting, index) => (
+            <React.Fragment key={setting.key}>
+              <View style={[styles.settingsWrap]}>
+                <Text style={styles.settingsSubtitle}>{setting.label}</Text>
 
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>New Emergency Alert</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Responder Assignment Update</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Escalated Alert Notification</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
+                <Switch
+                  value={notifications[setting.key]}
+                  onValueChange={(value) => handleNotificationToggle(setting.key, setting.label, value)}
+                  trackColor={{ false: '#ccc', true: '#fbd1d1' }}
+                  thumbColor={notifications[setting.key] ? '#a83232' : '#f4f3f4'}
+                  style={[styles.switch]}
+                />
+              </View>
+              {index < NOTIFICATION_SETTINGS.length - 1 && <View style={[styles.divider, {marginBottom: 0}]} />}
+            </React.Fragment>
+          ))}
         </View>
 
         <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Camera Settings</Text>
         <View style={[styles.settingsCard]}>
           <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Allow Camera for QR Scan</Text>                  
-        
+            <Text style={styles.settingsSubtitle}>Allow Camera for QR Scan</Text>
+
             <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
+              value={cameraEnabled}
+              onValueChange={setCameraEnabled}
               trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
+              thumbColor={cameraEnabled ? '#a83232' : '#f4f3f4'}
               style={[styles.switch]}
             />
           </View>
