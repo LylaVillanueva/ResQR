@@ -36,13 +36,13 @@ export default function StartScreen({ setSession }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Image
-          source={require('../assets/icon.png')}
+          source={require('../assets/logo.png')}
           style={styles.icon}
           resizeMode="contain"
         />
-        <Text style={styles.title}>ResQR</Text>
+        <Text style={styles.title}>QRAlalay</Text>
         <Text style={styles.description}>
-          Short Description of the App.
+          Scan. Respond. Alalay
         </Text>
       </View>
 

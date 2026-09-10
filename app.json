@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ResQR",
-    "slug": "ResQR",
+    "name": "QRAlalay",
+    "slug": "QRAlalay",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -27,7 +27,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "ResQR uses your location to record where a QR code was scanned during an emergency."
+          "locationWhenInUsePermission": "QRAlalay uses your location to record where a QR code was scanned during an emergency."
         }
       ]
     ]

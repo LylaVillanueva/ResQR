@@ -138,7 +138,7 @@ export default function SettingsScreen({ navigation, session, setSession }) {
 
         <View style={styles.divider} />
         <View style={styles.aboutContent}>
-          <Text style={styles.note}>ResQR ver1.0</Text>
+          <Text style={styles.note}>QRAlalay ver1.0</Text>
           <View style={styles.linkRow}>
             <TouchableOpacity onPress={() => {}}>
               <Text style={[styles.note, { textDecorationLine: 'underline' }]}>Terms of Agreement</Text>

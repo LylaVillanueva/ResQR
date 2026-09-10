@@ -90,7 +90,7 @@ export default function LoginPortal({ setSession, onBack }) {
         setOtp(['', '', '', '', '', '']);
         Alert.alert(
           'Not registered',
-          'This email or phone number is not registered with ResQR. Contact your barangay office to get an account set up.'
+          'This email or phone number is not registered with QRAlalay. Contact your barangay office to get an account set up.'
         );
       } else {
         Alert.alert('Verification Failed', err.message);

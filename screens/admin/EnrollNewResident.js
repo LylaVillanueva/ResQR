@@ -481,7 +481,7 @@ export default function EnrollNewResident({ navigation, session }) {
               ) : (
                 <View style={styles.readOnlyFieldWarning}>
                   <Text style={styles.readOnlyFieldWarningText}>
-                    Your account isn't linked to a barangay yet. Contact your ResQR administrator before enrolling residents.
+                    Your account isn't linked to a barangay yet. Contact your QRAlalay administrator before enrolling residents.
                   </Text>
                 </View>
               )}

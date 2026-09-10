@@ -22,7 +22,7 @@ export default function ScannerScreen({ navigation }) {
     if (match) {
       navigation.navigate('ProfileScreen', { residentId: match[1] });
     } else {
-      Alert.alert('Unrecognized QR code', 'This doesn\'t look like a ResQR resident code.', [
+      Alert.alert('Unrecognized QR code', 'This doesn\'t look like a QRAlalay resident code.', [
         { text: 'OK', onPress: () => setScanned(false) },
       ]);
     }

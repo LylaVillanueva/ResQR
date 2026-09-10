@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -42,8 +42,9 @@ export default function BystanderPublicWeb({ route }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={[styles.heading, { color: '#fff' }]}>[ResQR Logo Name]</Text>
-        <Text style={styles.subheading}>ResQR's public landing page</Text>
+        <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+        <Text style={[styles.heading, { color: '#fff' }]}>QRAlalay</Text>
+        <Text style={styles.subheading}>Scan. Respond. Alalay</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -89,7 +90,7 @@ export default function BystanderPublicWeb({ route }) {
 
 
         <View style={styles.divider} />
-        <Text style={styles.note}>ResQR 2026. All rights reserved.</Text>
+        <Text style={styles.note}>QRAlalay 2026. All rights reserved.</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -101,6 +102,7 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { padding: 20, marginTop: 0 },
   buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
+  logo: { width: 64, height: 64, marginBottom: 8, borderRadius: 12 },
   heading: { fontSize: 28, fontFamily: 'Poppins_600SemiBold', marginBottom: 5, marginTop: -10 },
   subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#fff', marginBottom: 15, marginLeft: 15 },
   heading1: { fontSize: 22, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
