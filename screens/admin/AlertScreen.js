@@ -47,7 +47,7 @@ export default function AlertScreen({ navigation }) {
       setLoading(true);
       setError(null);
       api
-        .listActiveIncidents()
+        .listActiveIncidents({ includeClosed: true })
         .then((data) => {
           if (!cancelled) setIncidents(data);
         })
@@ -122,7 +122,8 @@ export default function AlertScreen({ navigation }) {
         ) : (
           filteredIncidents.map((incident) => {
             const isActive = incident.status === 'active';
-            const needsAssignment = !incident.assigned_responder_id;
+            const isClosed = ['confirmed_safe', 'resolved', 'closed'].includes(incident.status);
+            const needsAssignment = !isClosed && !incident.assigned_responder_id;
             return (
               <TouchableOpacity
                 key={incident.id}

@@ -47,7 +47,7 @@ export default function AlertScreen({ navigation, session }) {
       setLoading(true);
       setError(null);
       api
-        .listActiveIncidents()
+        .listActiveIncidents({ includeClosed: true })
         .then((data) => {
           if (!cancelled) setIncidents(data);
         })
@@ -113,15 +113,18 @@ export default function AlertScreen({ navigation, session }) {
         ) : error ? (
           <Text style={styles.emptyText}>Couldn't load alerts: {error}</Text>
         ) : filteredIncidents.length === 0 ? (
-          <Text style={styles.emptyText}>No alerts match this filter right now.</Text>
+          <Text style={styles.emptyText}>
+            {activeFilter === 'closed' ? 'No closed alerts yet.' : 'No alerts match this filter right now.'}
+          </Text>
         ) : (
           filteredIncidents.map((incident) => {
             const isActive = incident.status === 'active';
+            const isClosed = ['confirmed_safe', 'resolved', 'closed'].includes(incident.status);
             // Only the responder this incident is actually assigned to
             // can confirm it — everyone else (unassigned or someone
             // else's task) just gets a view-only card.
             const needsMyConfirmation =
-              incident.assigned_responder_id === session?.user?.id && incident.responder_decision == null;
+              !isClosed && incident.assigned_responder_id === session?.user?.id && incident.responder_decision == null;
 
             const cardContent = (
               <>

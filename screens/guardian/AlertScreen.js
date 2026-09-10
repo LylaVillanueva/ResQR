@@ -47,7 +47,7 @@ export default function AlertScreen({ navigation }) {
       setLoading(true);
       setError(null);
       api
-        .listActiveIncidents()
+        .listActiveIncidents({ includeClosed: true })
         .then((data) => {
           if (!cancelled) setIncidents(data);
         })
@@ -113,11 +113,14 @@ export default function AlertScreen({ navigation }) {
         ) : error ? (
           <Text style={styles.emptyText}>Couldn't load alerts: {error}</Text>
         ) : filteredIncidents.length === 0 ? (
-          <Text style={styles.emptyText}>No alerts match this filter right now.</Text>
+          <Text style={styles.emptyText}>
+            {activeFilter === 'closed' ? 'No closed alerts yet.' : 'No alerts match this filter right now.'}
+          </Text>
         ) : (
           filteredIncidents.map((incident) => {
             const isActive = incident.status === 'active';
-            const needsMyConfirmation = incident.guardian_decision == null;
+            const isClosed = ['confirmed_safe', 'resolved', 'closed'].includes(incident.status);
+            const needsMyConfirmation = !isClosed && incident.guardian_decision == null;
             const cardContent = (
               <>
                 <View style={styles.alertCardTextWrap}>
