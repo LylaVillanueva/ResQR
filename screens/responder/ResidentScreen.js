@@ -7,8 +7,6 @@ import TabBar from '../../component/TabButtons';
 const filters = [
   { key: 'senior citizen', label: 'Senior' },
   { key: 'person with disability', label: 'PWD' },
-  { key: 'guardian', label: 'Guardian' },
-  { key: 'responder', label: 'Responder' },
 ];
 
 export default function ResidentScreen({ navigation }) {

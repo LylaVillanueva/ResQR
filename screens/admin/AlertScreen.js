@@ -1,244 +1,88 @@
-import React, {useState} from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/TabButtons';
+import { useAdminData } from '../../AdminDataContext';
 
 const filters = [
   { key: 'all', label: 'All' },
+  { key: 'active', label: 'Active' },
   { key: 'open', label: 'Open' },
   { key: 'pending', label: 'Pending' },
+  { key: 'escalated', label: 'Escalated' },
   { key: 'closed', label: 'Closed' },
+  { key: 'unassigned', label: 'Unassigned' },
 ];
 
-export default function AlertScreen({ navigation }) {
-  const [activeFilter, setActiveFilter] = useState(null);
-  
+function getSubtitle(alert) {
+  if (alert.status === 'escalated') return alert.escalationReason || 'Further response required';
+  if (alert.status === 'closed') return 'Both confirmations are completed';
+  if (alert.status === 'open') return 'No responder assigned';
+  if (alert.guardianStatus === 'Safe') return 'Guardian marked Safe • Waiting for responder';
+  if (alert.responderStatus === 'Safe') return 'Responder marked Safe • Waiting for guardian';
+  return 'Waiting for confirmation';
+}
+
+export default function AlertScreen({ route, navigation }) {
+  const { alerts } = useAdminData();
+  const requestedFilter = route.params?.filter || 'all';
+
+  const visibleAlerts = useMemo(() => alerts.filter((alert) => {
+    if (requestedFilter === 'all') return true;
+    if (requestedFilter === 'active') return alert.status !== 'closed';
+    if (requestedFilter === 'unassigned') return alert.status === 'open';
+    return alert.status === requestedFilter;
+  }), [alerts, requestedFilter]);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          <View>
-            <Text style={styles.heading}>Alert</Text>
-            <Text style={styles.subheading}>Tap an alert to confirm status</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.auditButton}
-            onPress={() => navigation.navigate('AuditLogScreen')}
-          >
-            <FontAwesome5 name="bars" size={25} color="#666" />
-            <Text style={styles.auditButtonText}>Audit</Text>
-          </TouchableOpacity>
+          <View><Text style={styles.heading}>Alerts</Text><Text style={styles.subheading}>{requestedFilter === 'unassigned' ? 'Alerts waiting for responder assignment' : 'Monitor emergency alert status'}</Text></View>
+          <TouchableOpacity style={styles.auditButton} onPress={() => navigation.navigate('AuditLogScreen')}><FontAwesome5 name="bars" size={24} color="#666" /><Text style={styles.auditText}>Audit</Text></TouchableOpacity>
         </View>
-
-        <View style={styles.filterBar}>
-          <Text style={styles.filterLabel}>Filter by:</Text>
-          <View style={styles.filterWrap}>
+        <View style={styles.filterScrollWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterWrap}>
             {filters.map((f) => (
-              <TouchableOpacity
-                key={f.key}
-                style={[styles.filterButton, activeFilter === f.key && styles.filterButtonActive]}
-                onPress={() => setActiveFilter(activeFilter === f.key ? null : f.key)}
-              >
-                <Text style={[styles.filterLabel, activeFilter === f.key && styles.filterLabelActive]}>
-                  {f.label}
-                </Text>
+              <TouchableOpacity key={f.key} style={[styles.filterButton, requestedFilter === f.key && styles.filterActive]} onPress={() => navigation.setParams({ filter: f.key })}>
+                <Text style={[styles.filterLabel, requestedFilter === f.key && styles.filterLabelActive]}>{f.label}</Text>
               </TouchableOpacity>
             ))}
-          </View>  
-        </View> 
+          </ScrollView>
+        </View>
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={[styles.alertCard, styles.alertCardActive]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertOpen, styles.shadow]}>Alert Open</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
+        {visibleAlerts.map((alert) => (
+          <View key={alert.id} style={[styles.alertCard, alert.status === 'escalated' && styles.escalatedCard]}>
+            <View style={styles.topRow}>
+              <Text style={[styles.statusPill, styles[`status_${alert.status}`]]}>{alert.status === 'open' ? 'Open Alert' : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}</Text>
+              <Text style={styles.time}>{alert.scannedAt}</Text>
+            </View>
+            <Text style={styles.name}>{alert.residentName}</Text>
+            <Text style={styles.type}>{alert.residentType}</Text>
+            <Text style={styles.location}>📍 {alert.location}</Text>
+            <Text style={styles.sub}>{getSubtitle(alert)}</Text>
+            <View style={styles.statusRow}>
+              <Text style={[styles.statusText, alert.guardianStatus === 'Not Safe' ? styles.notSafe : alert.guardianStatus === 'Safe' ? styles.safe : styles.waiting]}>Guardian: {alert.guardianStatus}</Text>
+              <Text style={[styles.statusText, alert.responderStatus === 'Not Safe' ? styles.notSafe : alert.responderStatus === 'Safe' ? styles.safe : styles.waiting]}>Responder: {alert.responderName ? (alert.responderStatus === 'Pending' ? 'Assigned' : alert.responderStatus) : 'Waiting'}</Text>
+            </View>
+            {alert.status === 'open' ? (
+              <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('AssignResponder', { alertId: alert.id })}><Text style={styles.actionText}>Assign Responder</Text><FontAwesome5 name="chevron-right" size={12} color="#245490" /></TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.actionButton} onPress={() => navigation.navigate('AlertDetails', { alertId: alert.id })}><Text style={styles.actionText}>Tap for Full Details</Text><FontAwesome5 name="chevron-right" size={12} color="#245490" /></TouchableOpacity>
+            )}
           </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
-          <Text style={styles.alertSubtitle}>Note: Optional Note that the bystander sent through the 
-            public landing page. This is very helpful for the guardian and responder</Text>
-          
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Guardian: Waiting</Text>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Responder: Waiting</Text>
-          </View>
-
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AssignResponder')}>
-              <Text style={styles.buttonText}>Assign Responder</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={[styles.alertCard]}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertPending, styles.shadow]}>Alert Pending</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Scanned by a Bystander</Text>
-
-          <View style={styles.statusRow}>
-            <Text style={[styles.statusText, styles.statusPending, styles.shadow]}>Guardian: Pending</Text>
-            <Text style={[styles.statusText, styles.statusOpen, styles.shadow]}>Responder: Not Safe</Text>
-          </View>
-
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-              <Text style={styles.buttonText}>Tap for Full Details</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.alertClosed, styles.shadow]}>Alert Closed</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          
-          <Text style={styles.heading1}>[Resident Name]</Text>
-          <Text style={styles.alertSubtitle}>Resolved - Both Party Confirmed Safe</Text>
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('AlertDetails')}>
-              <Text style={styles.buttonText}>Tap for Full Details</Text>
-              <FontAwesome5 name="caret-down" size={18} color="#245490" />
-            </TouchableOpacity>
-          </View>
-        </View>
+        ))}
+        {visibleAlerts.length === 0 && <View style={styles.empty}><FontAwesome5 name="bell-slash" size={28} color="#aaa" /><Text style={styles.emptyTitle}>No alerts found</Text><Text style={styles.emptyText}>There are no alerts matching this filter.</Text></View>}
       </ScrollView>
-
       <TabBar />
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 20, paddingBottom: 0 },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 0, marginTop: 20 },
-  heading: { fontSize: 26, fontFamily: 'Poppins_700Bold', marginBottom: -6 },
-  heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginLeft: 8 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
-  divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  auditButton: { alignItems: 'center', padding: 6, marginTop: 8 },
-  auditButtonText: { fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: 2 },
-  
-  shadow: {
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-
-  filterBar: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 4, 
-    marginTop: -10,
-    marginBottom: 6,
-  },
-  filterWrap: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginLeft: 8,
-  },
-  filterButton: {
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    marginHorizontal: 2,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  filterButtonActive: { backgroundColor: '#ffdcdc', borderWidth: 1, borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 7 },
-  filterLabel: { fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold', },
-
-  alertCard: {
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  alertCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  alertCardTitle: { 
-    borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2,
-  },
-  button: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#245490',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: '#d3e5f8',
-  },
-  buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  buttonTextWrap: { flexDirection: 'row', justifyContent: 'space-between' },
-  alertCardActive: { 
-    borderColor: '#a83232',
-    backgroundColor: '#fff',
-    shadowColor: '#a83232',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
-  alertTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
-  alertSubtitle: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, marginBottom: 10 },
-  detailButton: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#245490' },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 12
-  },
-  statusText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    fontFamily: 'Poppins_500Medium',
-    borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#666',
-  },
-  statusOpen: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa', },
+  container: { flex: 1, backgroundColor: '#fff' }, content: { padding: 20, paddingBottom: 0 }, scrollView: { flex: 1 }, scrollContent: { padding: 20, paddingTop: 12 }, headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }, heading: { fontSize: 28, fontFamily: 'Poppins_700Bold' }, subheading: { fontSize: 13, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 }, auditButton: { alignItems: 'center', padding: 5 }, auditText: { fontSize: 11, color: '#666', fontFamily: 'Poppins_500Medium', marginTop: 2 }, filterScrollWrap: { marginTop: 12 }, filterWrap: { paddingRight: 10 }, filterButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, backgroundColor: '#fff' }, filterActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, filterLabel: { fontSize: 11, color: '#666', fontFamily: 'Poppins_500Medium' }, filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10 }, alertCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, marginBottom: 12, backgroundColor: '#fff', shadowColor: '#777', shadowOffset: { width: 3, height: 5 }, shadowOpacity: 0.15, shadowRadius: 5, elevation: 3 }, escalatedCard: { borderColor: '#a83232' }, topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, statusPill: { borderRadius: 10, paddingHorizontal: 11, paddingVertical: 3, fontSize: 12, fontFamily: 'Poppins_600SemiBold' }, status_open: { color: '#a83232', backgroundColor: '#fbd1d1' }, status_pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, status_escalated: { color: '#a83232', backgroundColor: '#fbd1d1' }, status_closed: { color: '#288928', backgroundColor: '#a1fbaa' }, time: { fontSize: 11, color: '#777', fontFamily: 'Poppins_400Regular' }, name: { fontSize: 17, fontFamily: 'Poppins_600SemiBold', marginTop: 8 }, type: { fontSize: 12, color: '#555', fontFamily: 'Poppins_400Regular' }, location: { fontSize: 12, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 4 }, sub: { fontSize: 12, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 5 }, statusRow: { flexDirection: 'row', gap: 6, marginTop: 10, marginBottom: 10 }, statusText: { flex: 1, textAlign: 'center', fontSize: 10, fontFamily: 'Poppins_500Medium', borderRadius: 9, paddingVertical: 5, borderWidth: 1 }, waiting: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1' }, safe: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa' }, notSafe: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1' }, actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: '#245490', backgroundColor: '#d3e5f8', borderRadius: 9, paddingVertical: 8, paddingHorizontal: 12 }, actionText: { color: '#245490', fontFamily: 'Poppins_500Medium', fontSize: 12 }, empty: { alignItems: 'center', padding: 50 }, emptyTitle: { fontSize: 16, fontFamily: 'Poppins_600SemiBold', marginTop: 8 }, emptyText: { fontSize: 12, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 3 },
 });

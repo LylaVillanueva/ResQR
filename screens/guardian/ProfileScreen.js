@@ -1,47 +1,43 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Text, View, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import TabBar from '../../component/TabButtons';
+import GuardianTabBar from '../../component/GuardianTabButtons';
+import { useAdminData } from '../../AdminDataContext';
 
 export default function ProfileScreen({ route, navigation }) {
   const [showQR, setShowQR] = useState(false);
   const resident = route.params?.resident;
-   
-  function viewQR() {
-    setShowQR(true);
-  }
+  const { alerts } = useAdminData();
+
+  const wardAlerts = useMemo(() => resident ? alerts.filter((alert) => alert.residentId === resident.id) : [], [alerts, resident]);
+  const activeAlert = wardAlerts.find((alert) => alert.status !== 'closed');
 
   if (showQR) {
     return (
-        <SafeAreaView style={styles.container}>
+      <SafeAreaView style={styles.container}>
         <View style={styles.content}>
-            <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
-            <Text style={styles.heading}>QR Card Generated</Text>
-
-            <View style={styles.qrBox}>
-              <View style={styles.qrPlaceholder}>
-                <Text style={styles.qrPlaceholderText}>QR CODE{'\n'}PLACEHOLDER</Text>
-              </View>
-                
-              <Text style={styles.qrName}>{resident?.name || 'Maria Santos'}</Text>
-              <Text style={styles.qrDetail}>{resident?.id || 'ID: BRG-SC-2026-001'}</Text>
-              <Text style={styles.qrDetail}>{resident?.guardian || 'Guardian: Mang Kanor'}</Text>
-              <Text style={styles.qrDetail}>{resident?.phone || 'Contact: +639XXXXXXXXXX'}</Text>
-              <Text style={styles.qrDetail}>{resident?.barangay || 'Barangay: 206'}</Text>
-            </View>
-
-            <TouchableOpacity style={styles.primaryButton} onPress={() => { /* download PDF logic goes here */ }}>
-              <Text style={styles.primaryButtonText}>Download PDF</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => setShowQR(false)}
-            >
-              <Text style={styles.secondaryButtonText}>Back to Profile</Text>
-            </TouchableOpacity>
+          <Text style={styles.back} onPress={() => setShowQR(false)}>‹ Back to Ward Profile</Text>
+          <Text style={styles.heading}>Ward QR Code</Text>
+          <Text style={styles.subheading}>Use this QR when someone needs to identify your ward.</Text>
         </View>
-        </SafeAreaView>
+        <View style={styles.qrContent}>
+          <View style={styles.qrBox}><Text style={styles.qrPlaceholder}>QR CODE{`\n`}PLACEHOLDER</Text></View>
+          <Text style={styles.qrName}>{resident?.name}</Text>
+          <Text style={styles.qrDetail}>{resident?.id}</Text>
+          <Text style={styles.qrNote}>The official QR code is managed by the barangay.</Text>
+        </View>
+        <GuardianTabBar />
+      </SafeAreaView>
+    );
+  }
+
+  if (!resident) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}><Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text><Text style={styles.heading1}>Ward not found</Text></View>
+        <GuardianTabBar />
+      </SafeAreaView>
     );
   }
 
@@ -49,249 +45,129 @@ export default function ProfileScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
-
         <View style={styles.profileBar}>
-            <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
-            <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>{resident?.name || 'Maria Santos'}</Text>
-                <Text style={styles.meta}>{resident?.id || 'ID: BRC-SC-2026-0001'}</Text>
-                <Text style={styles.meta}>{resident?.role || 'Type: Person with Disability'}</Text>
-            </View>
+          <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
+          <View style={styles.profileTextWrap}>
+            <Text style={styles.name}>{resident.name}</Text>
+            <Text style={styles.meta}>{resident.id}</Text>
+            <Text style={styles.meta}>{resident.type}</Text>
+          </View>
+          <View style={[styles.currentStatus, activeAlert ? styles.currentStatusAlert : styles.currentStatusSafe]}>
+            <View style={[styles.statusDot, activeAlert ? styles.dotAlert : styles.dotSafe]} />
+            <Text style={[styles.currentStatusText, activeAlert ? styles.redText : styles.greenText]}>{activeAlert ? statusLabel(activeAlert.status) : 'Safe'}</Text>
+          </View>
         </View>
 
-        <TouchableOpacity style={styles.qrButton} onPress={viewQR}>
-            <Text style={styles.qrButtonText}>View QR Code</Text>
+        <TouchableOpacity style={styles.qrButton} onPress={() => setShowQR(true)}>
+          <FontAwesome5 name="qrcode" size={15} color="#a83232" />
+          <Text style={styles.qrButtonText}>View QR Code</Text>
         </TouchableOpacity>
-
         <View style={styles.divider} />
-        <Text style={styles.heading1}>Scan History</Text>
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.statusClosed]}>Alert Closed</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.alertSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>Confirmation Complete</Text>
-          <Text style={styles.alertSubtitle}>[Responder Name] - 2 of 2</Text>
-        </View>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Section title="Personal Information">
+          <Info label="Full Name" value={resident.name} />
+          <Info label="Date of Birth" value={resident.dob || 'Not available'} />
+          <Info label="Address" value={resident.address || 'Not available'} />
+        </Section>
 
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.statusPending]}>Alert Pending</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.alertSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>[Resident Name] Confirm Safe </Text>
-          <Text style={styles.alertSubtitle}>Waiting for Confirmation</Text>
-        </View>
+        <Section title="Guardian Information">
+          <Info label="Guardian Name" value={resident.guardianName || 'Not available'} />
+          <Info label="Relationship" value={resident.relationship || 'Not available'} />
+          <Info label="Contact Number" value={resident.guardianContact || 'Not available'} />
+        </Section>
 
-        <View style={styles.alertCard}>
-          <View style={styles.alertCardTextWrap}>
-            <Text style={[styles.alertCardTitle, styles.statusOpen]}>Alert Open</Text>
-            <Text style={styles.alertTime}>12:00 PM</Text>
-          </View>
-          <Text style={[styles.alertSubtitle, { fontFamily: 'Poppins_600SemiBold' }]}>A Bystander Scanned</Text>
-          <Text style={styles.alertSubtitle}>Optional Note</Text>
+        <Section title="Scan & Alert History">
+          {wardAlerts.length === 0 ? (
+            <Text style={styles.emptyText}>No scan or alert history yet for this ward.</Text>
+          ) : wardAlerts.map((alert) => (
+            <TouchableOpacity key={alert.id} style={styles.historyCard} onPress={() => navigation.navigate('AlertDetails', { alertId: alert.id })}>
+              <View style={[styles.historyDot, historyDot(alert.status)]} />
+              <View style={styles.historyTextWrap}>
+                <View style={styles.historyTopRow}>
+                  <Text style={styles.historyTitle}>{statusLabel(alert.status)}</Text>
+                  <Text style={styles.historyTime}>{alert.scannedAt}</Text>
+                </View>
+                <Text style={styles.historyMeta}>QR scanned by {alert.scannedBy || 'a Bystander'}</Text>
+                <Text style={styles.historyMeta}>📍 {alert.location || 'Location unavailable'}</Text>
+              </View>
+              <FontAwesome5 name="chevron-right" size={11} color="#999" />
+            </TouchableOpacity>
+          ))}
+        </Section>
+
+        <View style={styles.readOnlyNote}>
+          <FontAwesome5 name="lock" size={13} color="#777" />
+          <Text style={styles.readOnlyText}>Ward information is read-only. Only authorized barangay officials can edit resident information.</Text>
         </View>
       </ScrollView>
 
-      <TabBar />
+      <GuardianTabBar />
     </SafeAreaView>
   );
+}
+
+function Section({ title, children }) {
+  return <View><Text style={styles.sectionTitle}>{title}</Text><View style={styles.infoCard}>{children}</View></View>;
+}
+function Info({ label, value }) {
+  return <View style={styles.infoRow}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>;
+}
+function statusLabel(status) {
+  if (status === 'escalated') return 'Escalated';
+  if (status === 'pending') return 'Pending';
+  if (status === 'closed') return 'Closed';
+  return 'Open';
+}
+function historyDot(status) {
+  if (status === 'escalated' || status === 'open') return styles.dotAlert;
+  if (status === 'pending') return styles.dotPending;
+  return styles.dotSafe;
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: 20, paddingBottom: 0 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 0 },
-  back: { fontSize: 16, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 16, marginTop: -16 },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
-  heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
-
-  profileBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    marginTop: -12,
-  },
-  profilePhoto: {
-    width: 100,
-    height: 100,
-    borderRadius: 90,
-    borderWidth: 1.8,
-    borderColor: '#a83232',
-    backgroundColor: '#c4c4c4',
-    marginRight: 14,
-    shadowColor: '#625350',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
+  scrollContent: { padding: 20, paddingTop: 0, paddingBottom: 24 },
+  back: { fontSize: 15, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 14, marginTop: -5 },
+  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  profilePhoto: { width: 76, height: 76, borderRadius: 38, borderWidth: 1.7, borderColor: '#a83232', marginRight: 12 },
   profileTextWrap: { flex: 1 },
-  name: { fontSize: 22, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  meta: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#666' },
-
-  qrButton: {
-    backgroundColor: '#ffdcdc',
-    borderColor: '#a83232',
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 16,
-  },
-  qrButtonText: { color: '#a83232', fontFamily: 'Poppins_500Medium', fontSize: 16, fontWeight: '600' },
-
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-    marginBottom: 20,
-  },
-  alertCard: {
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 8,
-  },
-  alertCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  alertCardTitle: { 
-    borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2,
-  },
-  button: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#245490',
-    paddingVertical: 6,
-    paddingHorizontal: 16,
-    backgroundColor: '#d3e5f8',
-  },
-  buttonWrap: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  buttonSafe: {
-    flex: 1,
-    justifyContent: 'center',
-    borderColor: '#288928',
-    backgroundColor: '#a1fbaa',
-    marginRight: 6,
-  },
-  buttonNotSafe: {
-    flex: 1,
-    justifyContent: 'center',
-    borderColor: '#a83232',
-    backgroundColor: '#fbd1d1',
-    marginLeft: 6,
-  },
-  buttonText: { fontSize: 15, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  buttonTextWrap: { flexDirection: 'row', justifyContent: 'space-between' },
-  alertCardActive: { 
-    borderColor: '#a83232',
-    backgroundColor: '#fff',
-    shadowColor: '#a83232',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1', },
-  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa', },
-  alertTime: { fontSize: 13, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
-  alertSubtitle: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8 },
-  detailButton: { fontSize: 14, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#245490' },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
-    marginBottom: 12
-  },
-  statusText: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 12,
-    fontFamily: 'Poppins_500Medium',
-    borderRadius: 10,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#666',
-  },
-  statusOpen: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1', },
-  statusPending: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1', },
-  statusClosed: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa', },
-
-  primaryButton: {
-    borderRadius: 10,
-    backgroundColor: '#fbd1d1',
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#625350',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  primaryButtonText: { color: '#a83232', fontSize: 16, fontFamily: 'Poppins_500Medium' },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  secondaryButtonText: { color: '#c12b2b', fontSize: 16, fontFamily: 'Poppins_400Regular' },
-
-  pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: 12, fontFamily: 'Poppins_400Regular',},
-
-  qrBox: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    marginHorizontal: 16,
-  },
-  qrPlaceholder: {
-    width: 280,
-    height: 280,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 5,
-    marginBottom: 25,
-    backgroundColor: '#f2f2f2',
-  },
-  qrPlaceholderText: { textAlign: 'center', color: '#999', fontSize: 13, fontFamily: 'Poppins_500Medium' },
-  qrName: { fontSize: 24, fontFamily: 'Poppins_500Medium', marginBottom: 6 },
-  qrDetail: { fontSize: 16, fontFamily: 'Poppins_500Medium', color: '#333', textAlign: 'center', marginBottom: -2 },
+  name: { fontSize: 19, fontFamily: 'Poppins_600SemiBold', color: '#222' },
+  meta: { fontSize: 11, fontFamily: 'Poppins_400Regular', color: '#666', marginTop: 1 },
+  currentStatus: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 5 },
+  currentStatusSafe: { backgroundColor: '#e8f8ea' }, currentStatusAlert: { backgroundColor: '#fbd1d1' },
+  statusDot: { width: 7, height: 7, borderRadius: 4, marginRight: 4 },
+  dotSafe: { backgroundColor: '#288928' }, dotPending: { backgroundColor: '#d0a928' }, dotAlert: { backgroundColor: '#a83232' },
+  currentStatusText: { fontSize: 9, fontFamily: 'Poppins_600SemiBold' },
+  greenText: { color: '#288928' }, redText: { color: '#a83232' },
+  qrButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7, borderWidth: 1, borderColor: '#d9a2a2', backgroundColor: '#fff5f5', borderRadius: 9, paddingVertical: 9, marginBottom: 13 },
+  qrButtonText: { color: '#a83232', fontSize: 13, fontFamily: 'Poppins_600SemiBold' },
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
+  sectionTitle: { fontSize: 18, fontFamily: 'Poppins_600SemiBold', color: '#222', marginTop: 15, marginBottom: 7 },
+  infoCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff', elevation: 3, overflow: 'hidden' },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 13, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  infoLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#777' },
+  infoValue: { flex: 1, textAlign: 'right', marginLeft: 15, fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#333' },
+  historyCard: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  historyDot: { width: 9, height: 9, borderRadius: 5, marginRight: 10 },
+  historyTextWrap: { flex: 1 },
+  historyTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  historyTitle: { fontSize: 12, fontFamily: 'Poppins_600SemiBold', color: '#333' },
+  historyTime: { fontSize: 10, fontFamily: 'Poppins_400Regular', color: '#888' },
+  historyMeta: { fontSize: 10, fontFamily: 'Poppins_400Regular', color: '#777', marginTop: 2 },
+  emptyText: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#999', padding: 14 },
+  readOnlyNote: { flexDirection: 'row', alignItems: 'flex-start', backgroundColor: '#f6f6f6', borderRadius: 10, padding: 11, marginTop: 15 },
+  readOnlyText: { flex: 1, fontSize: 10, lineHeight: 16, fontFamily: 'Poppins_400Regular', color: '#777', marginLeft: 8 },
+  qrContent: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  qrBox: { width: 230, height: 230, borderWidth: 2, borderColor: '#333', borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  qrPlaceholder: { textAlign: 'center', fontFamily: 'Poppins_700Bold', color: '#333', lineHeight: 22 },
+  qrName: { fontSize: 20, fontFamily: 'Poppins_700Bold', color: '#222' },
+  qrDetail: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#666', marginTop: 3 },
+  qrNote: { fontSize: 11, fontFamily: 'Poppins_400Regular', color: '#888', textAlign: 'center', marginTop: 12 },
+  heading: { fontSize: 25, fontFamily: 'Poppins_700Bold' },
+  subheading: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#666', marginTop: 2 },
+  heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold' },
 });

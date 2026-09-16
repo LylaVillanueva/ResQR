@@ -1,264 +1,111 @@
-import React, { useState } from 'react';
-import { Text, View, StyleSheet, Image, Switch, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Image, Switch, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import TabBar from '../../component/TabButtons';
+import GuardianTabBar from '../../component/GuardianTabButtons';
+import { useAdminData } from '../../AdminDataContext';
 
-export default function ProfileScreen({ route, navigation }) {
-  const [isEnabled, setIsEnabled] = useState(false);
+const GUARDIAN_NAME = 'Ana Santos';
+
+export default function SettingsScreen({ navigation, setSession }) {
+  const { users, residents } = useAdminData();
+  const [push, setPush] = useState(true);
+  const [sound, setSound] = useState(true);
+  const [alertUpdate, setAlertUpdate] = useState(true);
+  const [responderUpdate, setResponderUpdate] = useState(true);
+
+  const guardianAccount = useMemo(() => users.find((user) => user.name === GUARDIAN_NAME), [users]);
+  const wardIds = guardianAccount?.wardIds || [];
+  const wards = residents.filter((r) => wardIds.includes(r.id));
+  const relationship = wards[0]?.relationship || guardianAccount?.relationship || 'Guardian';
+  const phone = guardianAccount?.phone || wards[0]?.guardianContact || 'Not available';
+
+  const info = (title, message) => Alert.alert(title, message);
+  const handleLogout = () => Alert.alert('Log Out?', 'Are you sure you want to log out?', [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Log Out', style: 'destructive', onPress: () => setSession?.(null) },
+  ]);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.profileBar}>
-            <Image source={require('../../assets/profile.png')} style={styles.profilePhoto} />
-            <View style={styles.profileTextWrap}>
-                <Text style={styles.name}>Poncho Reyes</Text>
-                <Text style={styles.meta}>Role: Guardian</Text>
-                <Text style={styles.meta}>Barangay: 206</Text>
-            </View>
+          <Image source={require('../../assets/profile.png')} style={styles.photo} />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name}>{GUARDIAN_NAME}</Text>
+            <Text style={styles.meta}>Guardian • Barangay 206</Text>
+          </View>
         </View>
-        <Text style={styles.heading1}>Settings</Text>
+        <Text style={styles.heading}>Settings</Text>
         <View style={styles.divider} />
       </View>
 
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Notification Settings</Text>
-        <View style={[styles.settingsCard]}>
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Push Notification</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-          
-          <View style={[styles.divider, {marginBottom: 0}]} />
-          
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Emergency Alert Sound</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-        </View>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Section title="Account Information">
+          <Info label="Name" value={GUARDIAN_NAME} />
+          <Info label="Mobile Number" value={phone} />
+          <Info label="Relationship" value={relationship} />
+          <Info label="Role" value="Guardian" />
+          <Info label="Barangay" value="Barangay 206" />
+          <Info label="Wards Linked" value={`${wards.length} ward${wards.length === 1 ? '' : 's'}`} />
+        </Section>
 
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Camera Settings</Text>
-        <View style={[styles.settingsCard]}>
-          <View style={[styles.settingsWrap]}>
-            <Text style={styles.settingsSubtitle}>Allow Camera for QR Scan</Text>                  
-        
-            <Switch
-              value={isEnabled}
-              onValueChange={setIsEnabled}
-              trackColor={{ false: '#ccc', true: '#fbd1d1' }}
-              thumbColor={isEnabled ? '#a83232' : '#f4f3f4'}
-              style={[styles.switch]}
-            />
-          </View>
-        </View>
+        <Section title="Notifications">
+          <ToggleRow label="Push Notifications" value={push} onChange={setPush} />
+          <Divider />
+          <ToggleRow label="Emergency Alert Sound" value={sound} onChange={setSound} />
+          <Divider />
+          <ToggleRow label="Emergency Alert Updates" value={alertUpdate} onChange={setAlertUpdate} />
+          <Divider />
+          <ToggleRow label="Responder Confirmation Update" value={responderUpdate} onChange={setResponderUpdate} />
+        </Section>
 
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>User Access Management</Text>
-        <View style={[styles.settingsCard]}>
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={styles.settingsSubtitle}>Manage User Role</Text>
-              </TouchableOpacity>
-            </View>
-        </View>
+        <Section title="Accessibility">
+          <LinkRow icon="language" label="Language" value="English" onPress={() => info('Language', 'English / Filipino')} />
+          <Divider />
+          <LinkRow icon="font" label="Font" value="Poppins" onPress={() => info('Font', 'Poppins')} />
+          <Divider />
+          <LinkRow icon="text-height" label="Font Size" value="Default" onPress={() => info('Font Size', 'Choose a readable text size.')} />
+        </Section>
 
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Accessibility</Text>
-        <View style={[styles.settingsCard]}>
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={styles.settingsSubtitle}>Language</Text>
-              </TouchableOpacity>
-            </View>
-        </View>
+        <Section title="Emergency Contacts">
+          <LinkRow icon="phone-alt" label="Barangay 206" value="View contact" onPress={() => info('Barangay Contact', 'The official Barangay 206 contact number should be configured by the project administrator.')} />
+          <Divider />
+          <LinkRow icon="ambulance" label="National Emergency" value="911" onPress={() => navigation.navigate('EmergencyHelp')} />
+        </Section>
 
-        <Text style={[styles.subheading, {fontFamily: 'Poppins_500Medium'}]}>Help and Support</Text>
-        <View style={[styles.settingsCard]}>
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={styles.settingsSubtitle}>FAQ (Frequently Asked Question)</Text>
-              </TouchableOpacity>
-            </View>
+        <Section title="Help & Support">
+          <LinkRow icon="question-circle" label="FAQ" onPress={() => info('FAQ', 'Frequently asked questions about using ResQR.')} />
+          <Divider />
+          <LinkRow icon="bug" label="Report a Problem / Bug" onPress={() => info('Report a Problem', 'Please provide the issue you encountered.')} />
+        </Section>
 
-            <View style={[styles.divider, {marginBottom: 0}]} />
+        <Section title="About">
+          <LinkRow icon="info-circle" label="About ResQR" onPress={() => info('About ResQR', 'ResQR is a barangay emergency response and resident safety system that uses QR-based identification and coordinated Guardian–Responder confirmation.')} />
+          <Divider />
+          <LinkRow label="App Version" value="1.0" />
+          <Divider />
+          <LinkRow icon="file-contract" label="Terms of Service / Agreement" onPress={() => info('Terms of Service', 'Terms of Service / Agreement content goes here.')} />
+          <Divider />
+          <LinkRow icon="user-shield" label="Privacy Policy" onPress={() => info('Privacy Policy', 'Privacy Policy content goes here.')} />
+        </Section>
 
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={styles.settingsSubtitle}>Report A Problem / Bug</Text>
-              </TouchableOpacity>
-            </View>
-        </View>
-
-        <View style={[styles.settingsCard, { backgroundColor: '#f1bdbd', borderColor: '#a83232', marginTop: 20 }]}>
-            <View style={styles.buttonContent}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('')}
-              >
-                <Text style={[styles.settingsSubtitle, { fontFamily: 'Poppins_500Medium', color: '#a83232', textAlign: 'center' }]}>Log out</Text>
-              </TouchableOpacity>
-            </View>
-        </View>
-
-        <View style={styles.divider} />
-        <View style={styles.aboutContent}>
-          <Text style={styles.note}>ResQR ver1.0</Text>
-          <View style={styles.linkRow}>
-            <TouchableOpacity onPress={() => {}}>
-              <Text style={[styles.note, { textDecorationLine: 'underline' }]}>Terms of Agreement</Text>
-            </TouchableOpacity>
-            <Text style={styles.note}>  |  </Text>
-            <TouchableOpacity onPress={() => {}}>
-              <Text style={[styles.note, { textDecorationLine: 'underline' }]}>Privacy Policy</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <TouchableOpacity style={styles.logout} onPress={handleLogout}>
+          <FontAwesome5 name="sign-out-alt" size={15} color="#a83232" />
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
       </ScrollView>
-
-    <TabBar />
+      <GuardianTabBar />
     </SafeAreaView>
   );
 }
 
+function Section({ title, children }) { return <View><Text style={styles.section}>{title}</Text><View style={styles.card}>{children}</View></View>; }
+function Divider() { return <View style={styles.innerDivider} />; }
+function ToggleRow({ label, value, onChange }) { return <View style={styles.row}><Text style={styles.rowLabel}>{label}</Text><Switch value={value} onValueChange={onChange} trackColor={{ false: '#ccc', true: '#fbd1d1' }} thumbColor={value ? '#a83232' : '#f4f3f4'} /></View>; }
+function LinkRow({ icon, label, value, onPress }) { return <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress} activeOpacity={0.7}>{icon ? <FontAwesome5 name={icon} size={14} color="#a83232" style={{ marginRight: 10 }} /> : null}<Text style={[styles.rowLabel, { flex: 1 }]}>{label}</Text>{value ? <Text style={styles.value}>{value}</Text> : null}{onPress ? <FontAwesome5 name="chevron-right" size={10} color="#888" style={{ marginLeft: 7 }} /> : null}</TouchableOpacity>; }
+function Info({ label, value }) { return <View style={styles.infoRow}><Text style={styles.infoLabel}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>; }
+
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: 20, paddingBottom: 0, },
-  aboutContent: { marginTop: 20, marginBottom: 20 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end', marginLeft: -7 },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: 20, paddingTop: 0, marginTop: 20 },
-  heading: { fontSize: 28, fontFamily: 'Poppins_700Bold', marginTop: -10 },
-  heading1: { fontSize: 20, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  subheading: { fontSize: 16, fontFamily: 'Poppins_400Regular', marginBottom: 6 },
-  note: { fontSize: 14, fontFamily: 'Poppins_500Medium', color: '#666', textAlign: 'center', marginBottom: -2 },
-
-  profileBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    marginBottom: 16,
-  },
-  profilePhoto: {
-    width: 100,
-    height: 100,
-    borderRadius: 90,
-    borderWidth: 1.8,
-    borderColor: '#a83232',
-    backgroundColor: '#c4c4c4',
-    marginRight: 14,
-    shadowColor: '#625350',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  profileTextWrap: { flex: 1 },
-  name: { fontSize: 22, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
-  meta: { fontSize: 14, fontFamily: 'Poppins_400Regular', color: '#666' },
-
-  divider: {
-    borderTopWidth: 1,
-    borderTopColor: '#ddd',
-  },
-
-  switch: {
-    transform: [{ scaleX: 1.2 }, { scaleY: 1.2 }],
-    margin: -10,
-    marginRight: -4,
-  },
-
-  settingsCard: {
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    marginBottom: 16,
-    backgroundColor: '#fff',
-    shadowColor: '#aaa',
-    shadowOffset: { width: 7, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  settingsSubtitle: { fontSize: 16, fontFamily: 'Poppins_400Regular', marginLeft: 4 },
-  settingsWrap: { flexDirection: 'row', justifyContent: 'space-between', padding: 12,},
-  settingsButtons: { 
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 42,
-    fontSize: 15, 
-    fontFamily: 'Poppins_600SemiBold', 
-    marginBottom: 2,
-    justifyContent: 'right',
-  },
-
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: '#a83232',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    justifyContent: 'space-between',
-  },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingBottom: 0,
-    marginHorizontal: 4,
-    borderRadius: 8,
-  },
-  tabLabel: { fontSize: 12, fontFamily: 'Poppins_400Regular', color: '#fff' },
-  tabLabelActive: { color: '#ffdcdc', fontFamily: 'Poppins_700Bold' },
-  iconWrap: {
-    borderRadius: 20,
-    width: 40,
-    height: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconActive: {
-    backgroundColor: '#fbd1d1',
-    shadowColor: '#fbd1d1',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  scanButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    borderWidth: 1.3,
-    borderColor: '#a83232',
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: -22,
-    shadowColor: '#fff',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 6,
-  },
+  container: { flex: 1, backgroundColor: '#fff' }, content: { padding: 20, paddingBottom: 0 }, scrollContent: { padding: 20, paddingTop: 4, paddingBottom: 25 }, profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 11 }, photo: { width: 65, height: 65, borderRadius: 33, borderWidth: 1.5, borderColor: '#a83232', marginRight: 11 }, name: { fontSize: 19, fontFamily: 'Poppins_600SemiBold' }, meta: { fontSize: 11, color: '#666', fontFamily: 'Poppins_400Regular' }, heading: { fontSize: 25, fontFamily: 'Poppins_700Bold', marginBottom: 7 }, divider: { borderTopWidth: 1, borderTopColor: '#ddd' }, section: { fontSize: 17, fontFamily: 'Poppins_600SemiBold', marginTop: 14, marginBottom: 6 }, card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, backgroundColor: '#fff', overflow: 'hidden', elevation: 3 }, row: { minHeight: 49, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 13 }, rowLabel: { fontSize: 13, fontFamily: 'Poppins_400Regular', color: '#222' }, value: { fontSize: 11, color: '#777', fontFamily: 'Poppins_400Regular' }, innerDivider: { borderTopWidth: 1, borderTopColor: '#eee', marginHorizontal: 13 }, infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 13, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: '#eee' }, infoLabel: { fontSize: 12, color: '#777', fontFamily: 'Poppins_400Regular' }, infoValue: { flex: 1, marginLeft: 15, textAlign: 'right', fontSize: 12, fontFamily: 'Poppins_500Medium', color: '#333' }, logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#f1bdbd', borderRadius: 10, paddingVertical: 13, marginTop: 19, marginBottom: 18 }, logoutText: { color: '#a83232', fontSize: 14, fontFamily: 'Poppins_600SemiBold' },
 });
