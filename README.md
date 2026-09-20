@@ -26,23 +26,17 @@ The URL above is an example for an Android emulator connecting to a backend on t
 ## Structure
 
 ```text
-App.js                         Expo entry shim
-src/App.js                     Fonts and providers
-src/navigation/                Role route registry and navigator
-src/context/AppDataContext.js  Shared live data, refresh, and mutation state
-src/hooks/                     Session restoration and resident profile loading
-src/lib/api.js                 Authenticated HTTP client and token rotation
-src/lib/appData.js             Backend-to-screen loading and write operations
-src/lib/models.js              Backend record/display mappings
-src/components/                Role navigation bars and loading/error UI
-src/screens/auth/              Login, start, and permission flow
-src/screens/admin/             Official dashboard and management screens
-src/screens/guardian/          Ward, alert, and emergency-help screens
-src/screens/responder/         Assignment, confirmation, and report screens
-src/screens/shared/            Shared camera scanner
-src/web/                       Public QR landing screen
-assets/                        Existing images and icons
-tests/                        Data-contract regression tests
+App.js                       Fonts and providers
+component/                   Shared UI, role tabs, and AppNavigator
+lib/                         API, data providers, hooks, and route registry
+screens/                     Login, permissions, and shared screens
+screens/admin/               Official dashboard and management screens
+screens/guardian/            Ward, alert, and emergency-help screens
+screens/responder/           Assignment, confirmation, and report screens
+web/                         Public QR landing screen
+assets/                      Existing images and icons
+theme.js                     Shared fonts, colors, and spacing
+*.test.cjs                   Data and notification regression tests
 ```
 
 ## Merge decisions
@@ -57,7 +51,7 @@ tests/                        Data-contract regression tests
 
 ## Shared interface
 
-`src/theme.js` defines 28-point titles, 22-point section headings, 18-point body/field text, 24-point page and form spacing, and controls at least 56 points tall. White pages, light-gray fields, subtle borders, and red accents follow the enrollment reference. `components/ui.js`, `AppText`, `AppTextInput`, `AppPicker`, and `TabBar` share those styles across all roles. Text-size and font preferences persist in Accessibility settings; text line heights scale with the chosen size.
+`theme.js` defines 28-point titles, 22-point section headings, 18-point body/field text, 24-point page and form spacing, and controls at least 56 points tall. White pages, light-gray fields, subtle borders, and red accents follow the enrollment reference. `component/ui.js`, `AppText`, `AppTextInput`, `AppPicker`, and `TabBar` share those styles across all roles. Text-size and font preferences persist in Accessibility settings; text line heights scale with the chosen size.
 
 ## Backend update
 
