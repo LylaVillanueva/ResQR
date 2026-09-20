@@ -26,17 +26,23 @@ The URL above is an example for an Android emulator connecting to a backend on t
 ## Structure
 
 ```text
-App.js                       Fonts and providers
-component/                   Shared UI, role tabs, and AppNavigator
-lib/                         API, data providers, hooks, and route registry
-screens/                     Login, permissions, and shared screens
-screens/admin/               Official dashboard and management screens
-screens/guardian/            Ward, alert, and emergency-help screens
-screens/responder/           Assignment, confirmation, and report screens
-web/                         Public QR landing screen
-assets/                      Existing images and icons
-theme.js                     Shared fonts, colors, and spacing
-*.test.cjs                   Data and notification regression tests
+App.js                         Expo entry shim
+src/App.js                     Fonts and providers
+src/navigation/                Role route registry and navigator
+src/context/AppDataContext.js  Shared live data, refresh, and mutation state
+src/hooks/                     Session restoration and resident profile loading
+src/lib/api.js                 Authenticated HTTP client and token rotation
+src/lib/appData.js             Backend-to-screen loading and write operations
+src/lib/models.js              Backend record/display mappings
+src/components/                Role navigation bars and loading/error UI
+src/screens/auth/              Login, start, and permission flow
+src/screens/admin/             Official dashboard and management screens
+src/screens/guardian/          Ward, alert, and emergency-help screens
+src/screens/responder/         Assignment, confirmation, and report screens
+src/screens/shared/            Shared camera scanner
+src/web/                       Public QR landing screen
+assets/                        Existing images and icons
+tests/                        Data-contract regression tests
 ```
 
 ## Merge decisions
@@ -51,7 +57,7 @@ theme.js                     Shared fonts, colors, and spacing
 
 ## Shared interface
 
-`theme.js` defines 28-point titles, 22-point section headings, 18-point body/field text, 24-point page and form spacing, and controls at least 56 points tall. White pages, light-gray fields, subtle borders, and red accents follow the enrollment reference. `component/ui.js`, `AppText`, `AppTextInput`, `AppPicker`, and `TabBar` share those styles across all roles. Text-size and font preferences persist in Accessibility settings; text line heights scale with the chosen size.
+`src/theme.js` defines 28-point titles, 22-point section headings, 18-point body/field text, 24-point page and form spacing, and controls at least 56 points tall. White pages, light-gray fields, subtle borders, and red accents follow the enrollment reference. `components/ui.js`, `AppText`, `AppTextInput`, `AppPicker`, and `TabBar` share those styles across all roles. Text-size and font preferences persist in Accessibility settings; text line heights scale with the chosen size.
 
 ## Backend update
 
@@ -78,3 +84,38 @@ npx expo export --platform android --output-dir /tmp/qralalay-android
 ```
 
 The automated tests cover data mappings, role-specific reads, closed-alert history, real account creation payloads, and report persistence/error propagation. An export validates bundling, not end-to-end login, hardware permissions, or live emergency delivery; verify those with test accounts and an emulator/device.
+
+## Changes after the recent pull
+
+The original README above is retained as it appeared in commit `0d9d654`. The paths in its Structure and Shared interface sections describe that version; the current locations are listed below.
+
+### Restored folder layout
+
+The current UI and functionality were preserved while 73 files were moved into the earlier folder layout. A total of 205 relative references were updated.
+
+| Previous location | Current location |
+| --- | --- |
+| `src/components/` | `component/` |
+| `src/context/`, `src/hooks/`, and `src/lib/` | `lib/` |
+| `src/navigation/AppNavigator.js` | `component/AppNavigator.js` |
+| `src/navigation/screens.js` | `lib/screenRegistry.js` |
+| `src/screens/auth/` and `src/screens/shared/` | `screens/` |
+| `src/screens/admin/`, `guardian/`, and `responder/` | Corresponding role folders under `screens/` |
+| `src/web/` | `web/` |
+| `src/App.js` and `src/theme.js` | Root `App.js` and `theme.js` |
+| `tests/` | Root `*.test.cjs` files |
+
+The emptied folders were removed. The test command now runs the root test files. Screen layouts, styles, navigation, account management, alerts, and incident reporting were retained.
+
+### Login and local connection changes
+
+- Registered accounts use the fixed test code `123456`. Select Continue to prepare the code, then enter it and select Verify.
+- The backend login-code flow no longer calls Resend; no email or SMS is sent. The app explains that the test code is ready.
+- The local, Git-ignored API URL was changed from the Android-emulator address to the Mac's LAN address for testing on a physical phone. Update that address if the Mac's network address changes.
+
+### Checks completed
+
+- All 13 mobile tests passed.
+- Android, iOS, and web exports bundled successfully.
+- Code comparison confirmed that the folder reorganization changed relative paths while preserving code, JSX, styles, and text.
+- Backend typechecking passed after the login-code changes. Device login and email delivery were not verified end to end; email delivery is disabled in the current test flow.
