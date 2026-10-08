@@ -101,10 +101,7 @@ export function StatusBadge({ status, label }) {
 
 const styles = StyleSheet.create({
   back: { marginTop: 0, marginBottom: 4, paddingVertical: 4, minHeight: 44, fontSize: typography.body, fontFamily: font.regular, color: colors.primary },
-  card: {
-    borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg,
-    backgroundColor: colors.surface, padding: spacing.card, ...shadow.card,
-  },
+  card: { borderWidth: 1, borderColor: colors.border, borderRadius: radius.lg, backgroundColor: colors.surface, padding: spacing.card, ...shadow.card },
   sectionTitle: { fontSize: typography.section, fontFamily: font.semibold, color: colors.ink, marginTop: spacing.section, marginBottom: 12 },
   compactSectionTitle: { marginTop: 14, marginBottom: 6 },
   compactCard: { paddingHorizontal: 8, paddingVertical: 4 },
@@ -115,10 +112,10 @@ const styles = StyleSheet.create({
   rowValue: { flexShrink: 1, maxWidth: '45%', textAlign: 'right', marginLeft: 12, fontSize: typography.detail, color: colors.textMuted, fontFamily: font.regular },
   fieldWrap: { marginBottom: spacing.field },
   fieldLabel: { fontSize: field.labelSize, fontFamily: font.regular, color: field.labelColor, marginBottom: 10 },
-  required: { color: colors.primaryBright },
-  fieldInput: { borderWidth: 1, borderColor: field.inputBorder, borderRadius: radius.sm, padding: 16, backgroundColor: '#f2f2f2', fontFamily: font.regular, fontSize: typography.body , minHeight: spacing.control },
+  required: { color: '#c12b2b' },
+  fieldInput: { borderWidth: 1, borderColor: field.inputBorder, borderRadius: radius.sm, paddingHorizontal: 12, backgroundColor: '#f2f2f2', fontFamily: font.regular, fontSize: typography.body , minHeight: spacing.control },
   fieldTextArea: { minHeight: 90, textAlignVertical: 'top' },
-  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11, paddingHorizontal: 10, borderBottomWidth: 1, borderBottomColor: colors.borderSoft },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 12 },
   infoLabel: { flex: 1, marginRight: 12, fontSize: typography.detail, color: colors.textMuted, fontFamily: font.regular },
   infoValue: { flexShrink: 1, fontSize: typography.detail, fontFamily: font.medium, color: colors.textPrimary, maxWidth: '58%', textAlign: 'right' },
   badge: { borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 4, fontSize: typography.caption, fontFamily: font.semibold, alignSelf: 'flex-start' },

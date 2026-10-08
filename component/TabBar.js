@@ -30,10 +30,8 @@ export default function TabBar({ tabs, activeMap = {} }) {
         onPress={() => navigation.navigate('ScannerScreen')}
         activeOpacity={0.85}
         accessibilityRole="button"
-        accessibilityLabel={t('scan')}
       >
         <FontAwesome5 name="qrcode" size={30} color={colors.primary} />
-        <Text style={styles.scanLabel}>{t('scan')}</Text>
       </TouchableOpacity>
 
       {tabs.slice(mid).map((tab) => (

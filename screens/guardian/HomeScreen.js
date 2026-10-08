@@ -1,13 +1,12 @@
 import { alertLayout } from '../../theme';
-import { typography, spacing } from '../../theme';
+import { typography, spacing, colors } from '../../theme';
 import React, { useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import Text from "../../component/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import TabBar from "../../component/GuardianTabButtons";
 import { FontAwesome5 } from '@expo/vector-icons';
+import TabBar from "../../component/GuardianTabButtons";
 import { useAppData } from "../../lib/AppDataContext";
-
 
 export default function HomeScreen({ navigation }) {
   const { alerts, users, residents, account } = useAppData();
@@ -31,25 +30,31 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>HOME</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('EmergencyHelp')}><Text style={{ color: '#a83232', fontFamily: 'Poppins_600SemiBold' }}>Get Emergency Help</Text></TouchableOpacity>
-        <Text style={styles.subheading}>Welcome, {account.fullName}</Text>
-        <Text style={styles.roleLine}>Guardian • {account.barangayName}</Text>
-        <View style={[styles.divider, { marginTop: 4 }]} />
+        <View style={styles.profileBar}>
+          <Image source={require("../../assets/profile.png")} style={styles.photo} accessible={false} />
+          <View style={{ flex: 1, marginTop: 3 }}>
+            <Text style={styles.subheading}>Welcome, {account.fullName}</Text>
+            <Text style={styles.roleLine}>{'Barangay Official'} • {account.barangayName}</Text>
+          </View>
+        </View>
+        <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {!currentAlert ? (
-          <View style={styles.emptyWrap}>
-            <View style={styles.emptyIcon}>
-              <FontAwesome5 name="clipboard-check" size={38} color="#288928" />
-            </View>
+          <View style={styles.emptyCard}>
+            <FontAwesome5 name="check-circle" size={24} color="#288928" />
             <Text style={styles.emptyTitle}>No active alerts</Text>
             <Text style={styles.emptyText}>Always remember to keep your{`\n`}ward safe and healthy.</Text>
           </View>
         ) : (
           <>
-            <View style={styles.sectionHeaderRow}><Text style={styles.heading1}>Active Ward Alert</Text><View style={styles.alertCount}><Text style={styles.alertCountText}>{myAlerts.length}</Text></View></View>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, styles.overviewTitle]}>Active Ward Alert</Text>
+              <View style={styles.alertCount}>
+                <Text style={styles.alertCountText}>{myAlerts.length}</Text>
+              </View>
+            </View>
             <View style={[styles.alertCard, styles.alertCardActive]}>
               <View style={styles.alertCardTextWrap}>
                 <Text style={[styles.alertCardTitle, statusStyle(currentAlert.status)]}>
@@ -61,7 +66,7 @@ export default function HomeScreen({ navigation }) {
                 <Text style={styles.alertTime}>{currentAlert.scannedAt}</Text>
               </View>
 
-              <Text style={styles.heading1Dark}>{currentAlert.residentName}</Text>
+              <Text style={styles.heading1}>{currentAlert.residentName}</Text>
               <Text style={styles.typeText}>{currentAlert.residentType}</Text>
               <Text style={styles.alertSubtitle}>Scanned by {currentAlert.scannedBy || 'a Bystander'}</Text>
 
@@ -80,8 +85,8 @@ export default function HomeScreen({ navigation }) {
               ) : null}
 
               <View style={styles.statusRow}>
-                <View style={styles.confirmationCard}><Text style={styles.confirmationLabel}>YOUR CONFIRMATION</Text><Text style={[styles.statusText, confirmationStyle(currentAlert.guardianStatus)]}>{currentAlert.guardianStatus === 'Pending' ? 'Action Needed' : currentAlert.guardianStatus}</Text></View>
-                <View style={styles.confirmationCard}><Text style={styles.confirmationLabel}>RESPONDER</Text><Text style={[styles.statusText, confirmationStyle(currentAlert.responderStatus)]}>{currentAlert.responderStatus === 'Pending' ? (currentAlert.responderName ? 'Pending' : 'Not Assigned') : currentAlert.responderStatus}</Text></View>
+                <Text style={[styles.statusText, currentAlert.guardianStatus === 'Not Safe' ? styles.notSafe : currentAlert.guardianStatus === 'Safe' ? styles.safe : styles.waiting]}>Guardian: {'\n'}{currentAlert.guardianStatus}</Text>
+                <Text style={[styles.statusText, currentAlert.responderStatus === 'Not Safe' ? styles.notSafe : currentAlert.responderStatus === 'Safe' ? styles.safe : styles.waiting]}>Responder: {'\n'}{currentAlert.responderStatus !== 'Pending' ? currentAlert.responderStatus: currentAlert.responderName ? 'Assigned': 'Waiting'}</Text>
               </View>
 
               {/* Guardian action: the Guardian must confirm the ward's current safety status. */}
@@ -100,7 +105,7 @@ export default function HomeScreen({ navigation }) {
                       resident: { name: currentAlert.residentName, id: currentAlert.residentId },
                     })}
                   >
-                    <Text style={[styles.buttonText, styles.safeText]}>✓ Mark Safe</Text>
+                    <Text style={[styles.buttonText, styles.safeText]}>Mark Safe</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -116,7 +121,7 @@ export default function HomeScreen({ navigation }) {
                       resident: { name: currentAlert.residentName, id: currentAlert.residentId },
                     })}
                   >
-                    <Text style={[styles.buttonText, styles.notSafeText]}>✕ Mark Not Safe</Text>
+                    <Text style={[styles.buttonText, styles.notSafeText]}>Mark Not Safe</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -130,7 +135,11 @@ export default function HomeScreen({ navigation }) {
         )}
 
         <View style={styles.divider} />
-        <Text style={styles.heading1}>My Wards</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>My Wards</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('AuditLogScreen')}><Text style={styles.viewAll}>View All ›</Text></TouchableOpacity>
+        </View>
+
         {myWards.length === 0 ? (
           <Text style={styles.emptyListText}>No wards linked to this account yet.</Text>
         ) : (
@@ -148,10 +157,8 @@ export default function HomeScreen({ navigation }) {
 
         <View style={styles.divider} />
         <View style={styles.headerRow}>
-          <Text style={styles.heading1}>Recent Alerts</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('AlertScreen')}>
-            <Text style={styles.heading2}>View All <FontAwesome5 name="caret-right" size={14} color="#666" /></Text>
-          </TouchableOpacity>
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('AuditLogScreen')}><Text style={styles.viewAll}>View All ›</Text></TouchableOpacity>
         </View>
 
         {recentAlerts.length === 0 ? (
@@ -192,52 +199,60 @@ function confirmationStyle(status) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: spacing.screen, paddingTop: 0, marginTop: 4, paddingBottom: 25 },
-  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 0 },
+  container: { flex: 1, backgroundColor: '#fff' }, 
+  content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 }, 
+  scrollView: { flex: 1 }, scrollContent: { padding: spacing.screen, paddingTop: 0 },
+  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 10 },
+  photo: { width: 52, height: 52, borderRadius: 26, borderWidth: 1.8, borderColor: colors.primary, backgroundColor: colors.border, marginRight: 13 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4, marginBottom: 0 }, 
+  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666' }, 
+  roleLine: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#a83232', marginBottom: 4 },
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 8 }, 
+
+  sectionTitle: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', color: '#222', marginTop: 12, marginBottom: 10 },
+  overviewTitle: { marginTop: 10, marginBottom: 10 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
+  alertCount: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: '#a83232', alignItems: 'center', justifyContent: 'center', marginTop: 0 },
+  alertCountText: { color: '#fff', fontSize: typography.caption, fontFamily: 'Poppins_700Bold' },
+
   heading1: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', color: '#222', marginTop: 12, marginBottom: 12 },
   heading1Dark: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', color: '#111', marginBottom: 6 , marginTop: 8 },
   heading2: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: 15, marginBottom: 4 },
   typeText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#245490', marginBottom: 6 },
-  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 2 },
-  roleLine: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#a83232', marginBottom: 4 },
-  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 6 },
   sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  alertCount: { minWidth: 24, height: 24, borderRadius: 12, backgroundColor: '#a83232', alignItems: 'center', justifyContent: 'center', marginTop: 12 },
-  alertCountText: { color: '#fff', fontSize: typography.caption, fontFamily: 'Poppins_700Bold' },
   confirmationCard: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 9, marginHorizontal: 3, backgroundColor: '#fff' },
   confirmationLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#888', marginBottom: 4, textAlign: 'center' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
   shadow: { shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
 
+    emptyCard: { alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 22 }, 
+    emptyTitle: { fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold', marginTop: 7 }, 
+    emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 2 }, 
   emptyWrap: { alignItems: 'center', paddingVertical: 24, paddingHorizontal: 20 },
   emptyIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#e8f8ea', alignItems: 'center', justifyContent: 'center', marginBottom: 18 },
   emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#288928', textAlign: 'center', marginBottom: 12 },
   emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', lineHeight: Math.ceil(typography.detail * 1.5) },
   emptyListText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#999', marginBottom: 10 },
 
-  alertCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card },
-  alertCardActive: { borderColor: '#e0e0e0', shadowColor: '#a83232' },
-  alertCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 , ...alertLayout.headerRow },
-  alertCardTitle: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },
-  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  alertCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, ...alertLayout.card },
+  alertCardActive: { borderColor: '#a83232', shadowColor: '#a83232' },
+  alertCardTextWrap: { flexWrap: 'wrap', gap: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, ...alertLayout.headerRow },
+  alertCardTitle: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1' },
   alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' },
   alertEscalated: { color: '#a83232', backgroundColor: '#fbd1d1' },
   alertClosed: { color: '#288928', backgroundColor: '#a1fbaa' },
   alertTime: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   alertSubtitle: { fontSize: typography.detail, fontFamily: 'Poppins_400Regular', marginBottom: 9 },
-  locationBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff7f7', borderWidth: 1, borderColor: '#f0cccc', borderRadius: 10, padding: 11, marginBottom: 10 , ...alertLayout.location },
+  locationBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff7f7', borderWidth: 1, borderColor: '#f0cccc', borderRadius: 10, padding: 10, marginBottom: 8, ...alertLayout.location },
   locationLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#888', marginLeft: 10 },
   locationText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#333', marginLeft: 10, marginTop: 1 },
-  statusRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, marginBottom: 12 },
-  statusText: { flex: 1, textAlign: 'center', fontSize: typography.caption, fontFamily: 'Poppins_500Medium', borderRadius: 10, paddingVertical: 5, paddingHorizontal: 6, marginHorizontal: 3, borderWidth: 1 },
-  statusPending: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1' },
-  statusClosed: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa' },
-  statusEscalated: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1' },
+  statusRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, marginBottom: 8},
+  statusText: { flex: 1, textAlign: 'center', fontSize: typography.caption, fontFamily: 'Poppins_500Medium', borderRadius: 10, paddingVertical: 4, paddingHorizontal: 8, marginHorizontal: 4, borderWidth: 1 },
+  waiting: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
+  safe: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa' }, 
+  notSafe: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1' },
   buttonWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  button: { flex: 1, alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingVertical: 16 , minHeight: spacing.control, justifyContent: 'center' },
+  button: { flex: 1, alignItems: 'center', borderRadius: 10, borderWidth: 1, paddingVertical: 10 , minHeight: spacing.control, justifyContent: 'center' },
   buttonSafe: { borderColor: '#288928', backgroundColor: '#a1fbaa', marginRight: 6 },
   buttonNotSafe: { borderColor: '#a83232', backgroundColor: '#fbd1d1', marginLeft: 6 },
   buttonDisabled: { opacity: 0.7 },

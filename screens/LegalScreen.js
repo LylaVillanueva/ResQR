@@ -3,11 +3,12 @@ import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import Text from "../component/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PRIVACY_POLICY, TERMS_OF_SERVICE, EFFECTIVE_DATE } from "../lib/legalContent";
+import { PRIVACY_POLICY, TERMS_OF_SERVICE, EFFECTIVE_DATE, ABOUT_QRALALAY } from "../lib/legalContent";
 
 const DOCS = {
   privacy: { title: 'Privacy Policy', sections: PRIVACY_POLICY },
   terms: { title: 'Terms of Service', sections: TERMS_OF_SERVICE },
+  about: { title: 'About QRAlalay', sections: ABOUT_QRALALAY },
 };
 
 export default function LegalScreen({ route, navigation }) {

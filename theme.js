@@ -32,7 +32,7 @@ export const shadow = {
 };
 
 // Logical pixels: readable at the default size, with optional larger text in Settings.
-export const typography = { title: 28, section: 22, body: 18, detail: 16, caption: 14 };
+export const typography = { title: 32, section: 24, body: 18, detail: 16, caption: 14 };
 export const spacing = { screen: 24, section: 24, field: 24, card: 16, control: 56 };
 
 export const radius = { sm: 8, md: 10, lg: 12, pill: 100 };

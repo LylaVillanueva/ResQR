@@ -1,4 +1,5 @@
 import { typography, spacing } from '../../theme';
+import QRCode from 'react-native-qrcode-svg';
 import useResidentProfile from "../../lib/useResidentProfile";
 import ScreenState from "../../component/ScreenState";
 import { api } from '../../lib/api';
@@ -6,12 +7,12 @@ import { mapResident } from '../../lib/models';
 import React, { useMemo, useState } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import Text from "../../component/AppText";
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import GuardianTabBar from "../../component/GuardianTabButtons";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from "../../lib/AppDataContext";
-import { Section, InfoRow, StatusBadge } from "../../component/ui";
-import { colors, shadow } from '../../theme';
+import TabBar from "../../component/GuardianTabButtons";
+import { Section, InfoRow, StatusBadge, BackLink } from "../../component/ui";
+import { colors, font, radius, shadow } from '../../theme';
 
 export default function ProfileScreen({ route, navigation }) {
   const { resident, setResident, alerts, loading, error } = useResidentProfile(route);
@@ -34,25 +35,27 @@ export default function ProfileScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
-        <View style={styles.profileBar}>
-          <Image source={require("../../assets/profile.png")} style={styles.profilePhoto} />
-          <View style={styles.profileTextWrap}>
-            <Text style={styles.name}>{resident.name}</Text>
-            <Text style={styles.meta}>{resident.code || resident.id}</Text>
-            <Text style={styles.meta}>{resident.type}</Text>
+        <View style={[styles.residentCard, styles.shadow]}>
+          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <View style={{ flex: 1, margin: 0 }}>
+            <Text style={styles.contextTitle}>{resident.name}</Text>
+            <Text style={styles.small}>Role: {resident.role}</Text>
+            <Text style={styles.small}>ID Number: {resident.id}</Text>
           </View>
+        </View>
+
+
+      </View>
+
           <View style={[styles.currentStatus, activeAlert ? styles.currentStatusAlert : styles.currentStatusSafe]}>
             <View style={[styles.statusDot, activeAlert ? styles.dotAlert : styles.dotSafe]} />
             <Text style={[styles.currentStatusText, activeAlert ? styles.redText : styles.greenText]}>{activeAlert ? statusLabel(activeAlert.status) : 'No active alert'}</Text>
           </View>
-        </View>
-
         <TouchableOpacity style={styles.qrButton} onPress={() => Alert.alert('Official QR card', 'Ask your barangay official for the resident’s issued QR card.')}>
           <FontAwesome5 name="qrcode" size={15} color="#a83232" />
           <Text style={styles.qrButtonText}>View QR Code</Text>
         </TouchableOpacity>
         <View style={styles.divider} />
-      </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Section title="Personal Information">
@@ -91,7 +94,7 @@ export default function ProfileScreen({ route, navigation }) {
         </View>
       </ScrollView>
 
-      <GuardianTabBar />
+      <TabBar />
     </SafeAreaView>
   );
 }
@@ -102,18 +105,33 @@ function statusLabel(status) {
   if (status === 'closed') return 'Closed';
   return 'Open';
 }
+function Field({ label, value, onChangeText, placeholder, keyboardType }) { return <View style={styles.fieldWrap}><Text style={styles.label}>{label}</Text><TextInput style={styles.input} value={value || ''} onChangeText={onChangeText} placeholder={placeholder} placeholderTextColor="#999" keyboardType={keyboardType} /></View>; }
+function Empty({ text }) { return <Text style={styles.empty}>{text}</Text>; }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: spacing.screen, paddingTop: 4, paddingBottom: 0 },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: spacing.screen, paddingTop: 0, paddingBottom: 24 },
-  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4},
-  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  profilePhoto: { width: 64, height: 64, borderRadius: 32, borderWidth: 1.7, borderColor: '#a83232', marginRight: 12 },
-  profileTextWrap: { flex: 1 },
-  name: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', color: '#222' },
-  meta: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#666', marginTop: 1 },
+  scrollContent: { padding: spacing.screen, paddingTop: 4, paddingBottom: 30 },
+  editScroll: { padding: 20, paddingTop: 4, paddingBottom: 30 },
+  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4 },
+  section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 14, marginBottom: 7 },
+  sectionLabel: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 5, marginBottom: 3 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
+  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 8 }, 
+
+  actionRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
+  statusPill: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, 
+  escalated: { color: '#a83232', backgroundColor: '#fbd1d1' }, dotEscalted: { backgroundColor: '#a83232' },
+  pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, dotPending: { backgroundColor: '#8a6d1d' },
+  closed: { color: '#288928', backgroundColor: '#a1fbaa' }, dotSafe: { backgroundColor: '#288928' },
+  viewButton: { flex: 1, backgroundColor: '#ffdcdc', borderColor: '#a83232', borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  viewButtonText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption },
+
   currentStatus: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 5 },
   currentStatusSafe: { backgroundColor: '#e8f8ea' }, currentStatusAlert: { backgroundColor: '#fbd1d1' },
   statusDot: { width: 7, height: 7, borderRadius: 4, marginRight: 4 },

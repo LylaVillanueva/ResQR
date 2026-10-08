@@ -7,28 +7,101 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { api, applyTokens, getDeviceId } from "../lib/api";
 import { useAccessibilitySettings } from "../lib/AccessibilitySettingsContext";
 
+const TEST_OTP = '000000';
+
+const TEST_ACCOUNTS = {
+  'admin@gmail.com': {
+    id: 'test-admin-001',
+    fullName: 'Cardo Dalisay',
+    name: 'Cardo',                       // some screens read account.name
+    email: 'admin@gmail.com',
+    phone: '+639000000001',
+    role: 'barangay_official',
+    position: 'Barangay Secretary',
+    barangayName: '206',
+    barangay: '206',                // mapUser exposes both
+    address: 'Test Barangay Hall',
+    status: 'Active',
+    wardIds: [],
+  },
+  '+639111111111': {
+    id: 'test-guardian-001',
+    fullName: 'Apple David',
+    name: 'Apple',
+    phone: '+639111111111',
+    role: 'guardian',
+    position: '',
+    barangayName: '206',
+    barangay: '206',
+    address: 'Test Guardian Address',
+    status: 'Active',
+    wardIds: [],
+  },
+  '+639222222222': {
+    id: 'test-responder-001',
+    fullName: 'Ka Erning',
+    name: 'Ka',
+    phone: '+639222222222',
+    role: 'barangay_responder',
+    position: 'Responder',
+    barangayName: '206',
+    barangay: '206',
+    address: 'Test Responder Address',
+    status: 'Active',
+    wardIds: [],
+  },
+};
+
+function getTestAccount(identifier) {
+  return TEST_ACCOUNTS[identifier] || null;
+}
+
 export default function LoginPortal({ setSession, onBack }) {
   const { t } = useAccessibilitySettings();
-  const [method, setMethod] = useState('email'); // 'email' | 'phone' — matches backend: either can authenticate
+  const [method, setMethod] = useState('email'); // 'email' | 'phone'
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState(''); // local digits only, e.g. "9171234567" — +63 is prefixed for you
+  const [phone, setPhone] = useState(''); // local digits only, e.g. "9171234567"
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef([]);
   const preparedOtp = useRef(false);
 
-  const identifier = method === 'email' ? email.trim() : `+63${phone.trim()}`;
+  // -------------------------------------------------------------------------
+  // Normalization — always produce a stable identifier string.
+  // Email: trim + lowercase so "Admin@Gmail.com " matches "admin@gmail.com".
+  // Phone: strip non-digits, drop a leading 0, then prefix +63.
+  // -------------------------------------------------------------------------
+  function normalizeIdentifier() {
+    if (method === 'email') return email.trim().toLowerCase();
+    const digits = phone.trim().replace(/[^0-9]/g, '');
+    const local = digits.startsWith('0') ? digits.slice(1) : digits;
+    return `+63${local}`;
+  }
 
-  function isValidIdentifier() {
-    if (method === 'email') return email.includes('@');
-    // PH mobile number: 10 digits, starts with 9 (the +63 prefix is added separately).
-    return /^9\d{9}$/.test(phone.trim());
+  function isValidIdentifier(id) {
+    if (method === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id);
+    return /^\+639\d{9}$/.test(id);
+  }
+
+  // Test account → session.user identical in shape to a real login response.
+  // AppNavigator routes via roleScreens[session.user.role], so the correct
+  // folder (admin / guardian / responder) opens automatically.
+  function loginAsTestAccount(account) {
+    setSession({
+      user: {
+        ...account,
+        isTestAccount: true,
+      },
+    });
   }
 
   async function handleContinue() {
     if (loading) return;
-    if (!identifier || !isValidIdentifier()) {
+
+    const id = normalizeIdentifier();
+
+    if (!isValidIdentifier(id)) {
       Alert.alert(
         method === 'email' ? 'Invalid Email' : 'Invalid Phone Number',
         method === 'email'
@@ -38,18 +111,32 @@ export default function LoginPortal({ setSession, onBack }) {
       return;
     }
 
+    // 1) TEST ACCOUNT PATH — no network call, ever.
+    const testAccount = getTestAccount(id);
+    if (testAccount) {
+      preparedOtp.current = true;
+      setOtp(['', '', '', '', '', '']);
+      setOtpSent(true);
+      Alert.alert(
+        'Test account',
+        `Use code ${TEST_OTP} to sign in as ${testAccount.role}.`
+      );
+      return;
+    }
+
+    // 2) REAL ACCOUNT PATH
     setLoading(true);
     try {
-      await api.sendOtp({ channel: method, identifier });
+      await api.sendOtp({ channel: method, identifier: id });
       preparedOtp.current = true;
       setOtp(['', '', '', '', '', '']);
       setOtpSent(true);
       Alert.alert(
         'Test code ready',
-        'Enter 123456 to continue. No email or SMS is sent.'
+        `Enter ${TEST_OTP} to continue. No email or SMS is sent.`
       );
     } catch (err) {
-      Alert.alert('Unable to prepare code', err.message);
+      Alert.alert('Unable to prepare code', err?.message || 'Network error');
     } finally {
       setLoading(false);
     }
@@ -68,28 +155,38 @@ export default function LoginPortal({ setSession, onBack }) {
     }
   }
 
-  // 2. Verify OTP — email or SMS, depending on which method was used to request it.
-  // No signup path here: accounts are provisioned by a barangay office, not
-  // self-served in the app, so an unregistered identifier is a dead end.
   async function handleVerifyOtp() {
     if (loading) return;
+    const id = normalizeIdentifier();
     const code = otp.join('');
+
     if (code.length < 6) {
       Alert.alert('Incomplete code', 'Please enter all 6 digits.');
       return;
     }
 
+    // 1) TEST ACCOUNT PATH — no network call, ever.
+    const testAccount = getTestAccount(id);
+    if (testAccount) {
+      if (code !== TEST_OTP) {
+        Alert.alert('Verification Failed', `Test accounts use code ${TEST_OTP}.`);
+        return;
+      }
+      loginAsTestAccount(testAccount);
+      return;
+    }
+
+    // 2) REAL ACCOUNT PATH
     setLoading(true);
     try {
-      // The fixed code must still be registered with the backend before verification.
       if (!preparedOtp.current) {
-        await api.sendOtp({ channel: method, identifier });
+        await api.sendOtp({ channel: method, identifier: id });
         preparedOtp.current = true;
       }
       const deviceId = await getDeviceId();
       const result = await api.verifyOtp({
         channel: method,
-        identifier,
+        identifier: id,
         otp: code,
         device: { deviceId, platform: Platform.OS === 'ios' ? 'ios' : 'android' },
       });
@@ -108,7 +205,7 @@ export default function LoginPortal({ setSession, onBack }) {
           'This email or phone number is not registered with QRAlalay. Contact your barangay office to get an account set up.'
         );
       } else {
-        Alert.alert('Verification Failed', err.message);
+        Alert.alert('Verification Failed', err?.message || 'Network error');
       }
     } finally {
       setLoading(false);
@@ -119,7 +216,10 @@ export default function LoginPortal({ setSession, onBack }) {
     setMethod(newMethod);
     setOtpSent(false);
     setOtp(['', '', '', '', '', '']);
+    preparedOtp.current = false;
   }
+
+  const identifier = normalizeIdentifier();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -128,109 +228,110 @@ export default function LoginPortal({ setSession, onBack }) {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        <Text
-          style={styles.back}
-          onPress={() => { if (!loading) { if (!otpSent) onBack?.(); else setOtpSent(false); } }}
-        >
-          {t('back')}
-        </Text>
-        <Text style={styles.heading}>{t('signIn')}</Text>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <Text
+            style={styles.back}
+            onPress={() => { if (!loading) { if (!otpSent) onBack?.(); else setOtpSent(false); } }}
+          >
+            {t('back')}
+          </Text>
+          <Text style={styles.heading}>{t('signIn')}</Text>
 
-        {!otpSent && (
-          <View style={styles.methodToggle}>
-            <TouchableOpacity
-              style={[styles.methodButton, method === 'email' && styles.methodButtonActive]}
-              onPress={() => switchMethod('email')}
-            >
-              <Text style={[styles.methodButtonText, method === 'email' && styles.methodButtonTextActive]}>
-                {t('email')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.methodButton, method === 'phone' && styles.methodButtonActive]}
-              onPress={() => switchMethod('phone')}
-            >
-              <Text style={[styles.methodButtonText, method === 'phone' && styles.methodButtonTextActive]}>
-                {t('phone')}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
+          {!otpSent && (
+            <View style={styles.methodToggle}>
+              <TouchableOpacity
+                style={[styles.methodButton, method === 'email' && styles.methodButtonActive]}
+                onPress={() => switchMethod('email')}
+              >
+                <Text style={[styles.methodButtonText, method === 'email' && styles.methodButtonTextActive]}>
+                  {t('email')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.methodButton, method === 'phone' && styles.methodButtonActive]}
+                onPress={() => switchMethod('phone')}
+              >
+                <Text style={[styles.methodButtonText, method === 'phone' && styles.methodButtonTextActive]}>
+                  {t('phone')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
-        {!otpSent ? (
-          method === 'email' ? (
-            <>
-              <Text style={styles.label}>{t('enterEmailAddress')}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="name@example.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                value={email}
-                onChangeText={setEmail}
-              />
-            </>
+          {!otpSent ? (
+            method === 'email' ? (
+              <>
+                <Text style={styles.label}>{t('enterEmailAddress')}</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="name@example.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </>
+            ) : (
+              <>
+                <Text style={styles.label}>{t('enterPhoneNumber')}</Text>
+                <View style={styles.phoneRow}>
+                  <View style={styles.countryCode}>
+                    <Text style={styles.countryCodeText}>+63</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder="9XX-XXX-XXXX"
+                    keyboardType="number-pad"
+                    maxLength={10}
+                    value={phone}
+                    onChangeText={(value) => setPhone(value.replace(/[^0-9]/g, ''))}
+                  />
+                </View>
+              </>
+            )
           ) : (
             <>
-              <Text style={styles.label}>{t('enterPhoneNumber')}</Text>
-              <View style={styles.phoneRow}>
-                <View style={styles.countryCode}>
-                  <Text style={styles.countryCodeText}>+63</Text>
-                </View>
-                <TextInput
-                  style={styles.phoneInput}
-                  placeholder="9XX-XXX-XXXX"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  value={phone}
-                  onChangeText={(value) => setPhone(value.replace(/[^0-9]/g, ''))}
-                />
+              <Text style={styles.label}>Enter the 6-digit verification code for {identifier}</Text>
+              <View style={styles.otpRow}>
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => (otpRefs.current[index] = ref)}
+                    style={styles.otpBox}
+                    value={digit}
+                    onChangeText={(value) => handleOtpChange(value, index)}
+                    onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    textAlign="center"
+                  />
+                ))}
               </View>
+              <Text style={styles.resend} onPress={handleContinue}>
+                Request code again
+              </Text>
             </>
-          )
-        ) : (
-          <>
-            <Text style={styles.label}>Enter the 6-digit verification code for {identifier}</Text>
-            <View style={styles.otpRow}>
-              {otp.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={(ref) => (otpRefs.current[index] = ref)}
-                  style={styles.otpBox}
-                  value={digit}
-                  onChangeText={(value) => handleOtpChange(value, index)}
-                  onKeyPress={(e) => handleOtpKeyPress(e, index)}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  textAlign="center"
-                />
-              ))}
-            </View>
-            <Text style={styles.resend} onPress={handleContinue}>
-              Request code again
-            </Text>
-          </>
-        )}
-      </ScrollView>
+          )}
+        </ScrollView>
 
-      <View style={styles.bottomBar}>
-        <TouchableOpacity
-          style={[styles.button, styles.shadow]}
-          onPress={otpSent ? handleVerifyOtp : handleContinue}
-          disabled={loading}
-        >
-          <Text style={styles.buttonText}>
-            {otpSent
-              ? loading
-                ? t('verifying')
-                : t('verify')
-              : loading
-              ? 'Preparing...'
-              : 'Continue'}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <View style={styles.bottomBar}>
+          <TouchableOpacity
+            style={[styles.button, styles.shadow]}
+            onPress={otpSent ? handleVerifyOtp : handleContinue}
+            disabled={loading}
+          >
+            <Text style={styles.buttonText}>
+              {otpSent
+                ? loading
+                  ? t('verifying')
+                  : t('verify')
+                : loading
+                ? 'Preparing...'
+                : 'Continue'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -239,7 +340,7 @@ export default function LoginPortal({ setSession, onBack }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   flex: { flex: 1 },
-  scrollContent: { padding: spacing.screen, paddingBottom: 40 , paddingTop: 4 },
+  scrollContent: { padding: spacing.screen, paddingBottom: 40, paddingTop: 4 },
   back: { fontFamily: 'Poppins_400Regular', fontSize: typography.body, color: '#a83232', marginBottom: 4, minHeight: 44, paddingVertical: 4, marginTop: 0 },
   heading: { fontFamily: 'Poppins_600SemiBold', fontSize: typography.title, marginBottom: 8 },
   label: { fontFamily: 'Poppins_400Regular', fontSize: typography.body, color: '#666', marginBottom: 10 },
@@ -276,7 +377,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Poppins_400Regular',
     fontSize: typography.body,
     marginBottom: 16,
-   minHeight: spacing.control, backgroundColor: '#f2f2f2' },
+    minHeight: spacing.control,
+    backgroundColor: '#f2f2f2',
+  },
 
   phoneRow: { flexDirection: 'row', marginBottom: 16 },
   countryCode: {
@@ -297,7 +400,9 @@ const styles = StyleSheet.create({
     padding: 16,
     fontFamily: 'Poppins_400Regular',
     fontSize: typography.body,
-   minHeight: spacing.control, backgroundColor: '#f2f2f2' },
+    minHeight: spacing.control,
+    backgroundColor: '#f2f2f2',
+  },
 
   otpRow: { flexDirection: 'row', gap: 8, justifyContent: 'space-between', marginBottom: 20 },
   otpBox: {
@@ -331,6 +436,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
-   minHeight: spacing.control, justifyContent: 'center' },
+    minHeight: spacing.control,
+    justifyContent: 'center',
+  },
   buttonText: { color: '#a83232', fontSize: typography.body, fontFamily: 'Poppins_500Medium' },
 });

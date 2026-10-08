@@ -7,8 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useAppData } from "../../lib/AppDataContext";
 import ReasonPromptModal from "../../component/ReasonPromptModal";
-
 import TabBar from "../../component/ResponderTabButtons";
+
 export default function AlertDetails({ route, navigation }) {
   const { alerts, account, markGuardianUnreachable, markResponderUnreachable } = useAppData();
   const alert = alerts.find((item) => item.id === (route.params?.alertId || route.params?.incidentId));

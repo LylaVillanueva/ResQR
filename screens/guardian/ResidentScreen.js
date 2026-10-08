@@ -1,7 +1,8 @@
 import { typography, spacing } from '../../theme';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native';
 import Text from "../../component/AppText";
+import TextInput from "../../component/AppTextInput";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import GuardianTabBar from "../../component/GuardianTabButtons";
@@ -12,6 +13,7 @@ import { shadow } from '../../theme';
 
 export default function ResidentScreen({ navigation }) {
   const { users, residents, alerts, account } = useAppData();
+  const [searchQuery, setSearchQuery] = useState('');
   const guardianAccount = useMemo(() => users.find((user) => user.id === account.id), [users, account.id]);
   const wardIds = guardianAccount?.wardIds || [];
   const myWards = useMemo(() => residents.filter((resident) => wardIds.includes(resident.id)), [residents, wardIds]);
@@ -19,8 +21,22 @@ export default function ResidentScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>My Wards</Text>
-        <Text style={styles.subheading}>Residents linked to your Guardian account</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.heading}>My Wards</Text>
+        </View>
+        <Text style={styles.subheading}>Residents linked to Your Account</Text>
+        <View style={styles.divider} />
+
+        <View style={styles.searchBar}>
+          <FontAwesome5 name="search" size={18} color="#a83232" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by name or ID"
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
         <View style={styles.divider} />
       </View>
 
@@ -66,13 +82,17 @@ function statusLabel(status) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: spacing.screen, paddingBottom: 0 },
-  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
-  subheading: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 14 },
-  divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
-  scrollView: { flex: 1 },
-  scrollContent: { padding: spacing.screen, paddingTop: 18, paddingBottom: 25 },
+  container: { flex: 1, backgroundColor: '#fff' }, 
+  content: { padding: spacing.screen, paddingBottom: 0, marginTop: -14 },
+  scrollView: { flex: 1 }, 
+  scrollContent: { padding: spacing.screen, paddingTop: 12 , paddingBottom: 32 }, 
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4 }, 
+  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: -8 }, 
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10 },
+
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10, minHeight: spacing.control },
+  searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333', minHeight: spacing.control, backgroundColor: '#f2f2f2' },
   wardCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 13, padding: 13, marginBottom: 11, backgroundColor: '#fff', ...shadow.card },
   wardCardActive: { borderColor: '#e0aaaa' },
   photo: { width: 63, height: 63, borderRadius: 32, borderWidth: 1.4, borderColor: '#a83232', marginRight: 11 },

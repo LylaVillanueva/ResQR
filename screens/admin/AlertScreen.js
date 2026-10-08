@@ -44,10 +44,16 @@ export default function AlertScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}><Text style={styles.heading}>Alerts</Text><Text style={styles.subheading}>{requestedFilter === 'unassigned' ? 'Alerts waiting for responder assignment' : 'Monitor emergency alert status'}</Text></View>
-          <TouchableOpacity style={styles.auditButton} onPress={() => navigation.navigate('AuditLogScreen')}><FontAwesome5 name="bars" size={24} color="#666" /><Text style={styles.auditText}>Audit</Text></TouchableOpacity>
+          <Text style={styles.heading}>Alerts</Text>
+          <TouchableOpacity style={styles.auditButton} onPress={() => navigation.navigate('AuditLogScreen')}>
+            <FontAwesome5 name="bars" size={13} color="#a83232" />
+            <Text style={styles.auditText}>Audit Log</Text>
+          </TouchableOpacity>
         </View>
+        <Text style={styles.subheading}>{requestedFilter === 'unassigned' ? 'Alerts waiting for responder assignment' : 'Monitor emergency alert status'}</Text>
+        
         <View style={styles.filterScrollWrap}>
+          <Text style={[styles.filterLabel, {marginRight: 10}]}>Filter by:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterWrap}>
             {filters.map((f) => (
               <TouchableOpacity key={f.key} style={[styles.filterButton, requestedFilter === f.key && styles.filterActive]} onPress={() => navigation.setParams({ filter: f.key })}>
@@ -108,12 +114,32 @@ export default function AlertScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' }, content: { padding: spacing.screen, paddingBottom: 0 , paddingTop: 12 }, scrollView: { flex: 1 }, scrollContent: { padding: spacing.screen, paddingTop: 12 , paddingBottom: 32 }, headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 }, heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold' , marginBottom: 8 }, subheading: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 }, auditButton: { alignItems: 'center', padding: 5 }, auditText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium', marginTop: 2 }, filterScrollWrap: { marginTop: 12 }, filterWrap: { paddingRight: 10 }, filterButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, backgroundColor: '#fff' }, filterActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' }, filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10 },
+  container: { flex: 1, backgroundColor: '#fff' }, 
+  content: { padding: spacing.screen, paddingBottom: 0, marginTop: -14 },
+  scrollView: { flex: 1 }, 
+  scrollContent: { padding: spacing.screen, paddingTop: 12 , paddingBottom: 32 }, 
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4 }, 
+  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: -8 }, 
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10 },
+
+  auditButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, minHeight: 40 },
+  auditText: { color: '#a83232', fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', marginLeft: 5 },
+  filterScrollWrap: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: 8, marginBottom: -4 },
+  filterWrap: { paddingRight: 10 }, 
+  filterButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, backgroundColor: '#fff' }, 
+  filterActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, 
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' }, 
+  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
+
   alertCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card },
   escalatedCard: { borderColor: '#a83232' },
   alertCardTextWrap: { flexWrap: 'wrap', gap: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 , ...alertLayout.headerRow },
   statusPill: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },
-  status_open: { color: '#a83232', backgroundColor: '#fbd1d1' }, status_pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, status_escalated: { color: '#a83232', backgroundColor: '#fbd1d1' }, status_closed: { color: '#288928', backgroundColor: '#a1fbaa' },
+  status_open: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
+  status_pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
+  status_escalated: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
+  status_closed: { color: '#288928', backgroundColor: '#a1fbaa' },
   time: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
   heading1: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginLeft: 0, marginTop: 8, marginBottom: 6},
   typeText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#245490', marginLeft: 0, marginBottom: 4},
@@ -123,8 +149,13 @@ const styles = StyleSheet.create({
   locationText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#333', marginLeft: 10, marginTop: 1 },
   statusRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4, marginBottom: 8},
   statusText: { flex: 1, textAlign: 'center', fontSize: typography.caption, fontFamily: 'Poppins_500Medium', borderRadius: 10, paddingVertical: 4, paddingHorizontal: 8, marginHorizontal: 4, borderWidth: 1 },
-  waiting: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1' }, safe: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa' }, notSafe: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1' },
-  detailsButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#245490', paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#d3e5f8' , minHeight: 48, ...alertLayout.details },
+  waiting: { color: '#8a6d1d', borderColor: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
+  safe: { color: '#288928', borderColor: '#288928', backgroundColor: '#a1fbaa' }, 
+  notSafe: { color: '#a83232', borderColor: '#a83232', backgroundColor: '#fbd1d1' },
+  detailsButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#245490', paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#d3e5f8', minHeight: 48, ...alertLayout.details },
   detailsText: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#245490' },
-  empty: { alignItems: 'center', padding: 50 }, emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 8 }, emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 3 },
+  
+  empty: { alignItems: 'center', padding: 50 }, 
+  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 8 }, 
+  emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 3 },
 });

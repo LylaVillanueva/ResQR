@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
 import ReasonPromptModal from "../../component/ReasonPromptModal";
+import { Divider } from "../../component/ui";
 import { useAppData } from "../../lib/AppDataContext";
 
 export default function AlertDetails({ route, navigation }) {
@@ -36,37 +37,64 @@ export default function AlertDetails({ route, navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}><Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text></View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.profileBar}>
-          <Image source={require("../../assets/profile.png")} style={styles.profilePhoto} />
-          <View style={styles.profileTextWrap}>
-            <Text style={styles.name}>{alert.residentName}</Text>
-            <Text style={styles.meta}>{alert.residentType}</Text>
-            {alert.residentCode ? <Text style={styles.meta}>Card: {alert.residentCode}</Text> : null}
+      <View style={styles.content}>
+        <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
+        
+        <View style={[styles.residentCard, styles.shadow]}>
+          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <View style={{ flex: 1, margin: 0 }}>
+            <Text style={styles.contextTitle}>{alert.residentName}</Text>
+            <Text style={styles.small}>Type: {alert.residentType}</Text>
+            <Text style={styles.small}>ID Number: {alert.residentId}</Text>
           </View>
         </View>
 
-        <View style={styles.statusHeader}><Text style={[styles.statusPill, statusStyle]}>{statusLabel}</Text><Text style={styles.time}>{alert.scannedAt}</Text></View>
-
+        <View style={styles.statusHeader}>
+          <Text style={[styles.statusPill, statusStyle]}>{statusLabel}</Text>
+          <Text style={styles.time}>{alert.scannedAt}</Text>
+        </View>
+        <View style={styles.divider} />
+      </View>
+      
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.section}>Incident Location</Text>
         <View style={styles.card}>
-          <View style={styles.iconRow}><FontAwesome5 name="map-marker-alt" size={18} color="#a83232" /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.location}</Text><Text style={styles.small}>Location where the QR code was scanned</Text></View></View>
-          {alert.scan_latitude != null && alert.scan_longitude != null && <TouchableOpacity style={styles.mapButton} onPress={async () => { if (alert.scan_latitude == null || alert.scan_longitude == null) { Alert.alert('Location unavailable', 'No coordinates were recorded for this incident.'); return; } try { await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${alert.scan_latitude},${alert.scan_longitude}`); } catch { Alert.alert('Could not open map'); } }}><Text style={styles.mapText}>View Location</Text></TouchableOpacity>}
+          <View style={styles.iconRow}>
+            <FontAwesome5 name="map-marker-alt" size={18} color="#a83232" />
+              <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.location}</Text>
+                <Text style={styles.small}>Location where the QR code was scanned</Text>
+              </View>
+          </View>
+          {alert.scan_latitude != null && alert.scan_longitude != null && <TouchableOpacity style={styles.mapButton} onPress={async () => { if (alert.scan_latitude == null || alert.scan_longitude == null) { Alert.alert('Location unavailable', 'No coordinates were recorded for this incident.'); return; } 
+          try { await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${alert.scan_latitude},${alert.scan_longitude}`); } catch { Alert.alert('Could not open map'); } }}><Text style={styles.mapText}>View Location</Text></TouchableOpacity>}
         </View>
-
+        
         <Text style={styles.section}>Scanned By</Text>
-        <View style={styles.card}><View style={styles.iconRow}><Image source={require("../../assets/profile.png")} style={styles.smallPhoto} /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.scannedBy}</Text><Text style={styles.small}>QR scan initiated the alert</Text></View></View></View>
-
+        <View style={styles.card}><View style={styles.iconRow}>
+          <Image source={require("../../assets/profile.png")} style={styles.smallPhoto} />
+          <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.scannedBy}</Text>
+            <Text style={styles.small}>QR scan initiated the alert</Text>
+          </View>
+        </View></View>
+        
         <Text style={styles.section}>Bystander Note</Text>
         <View style={styles.card}><Text style={styles.note}>{alert.bystanderNote || 'No note was submitted by the bystander.'}</Text></View>
-
+        
         <Text style={styles.section}>Responder Assignment</Text>
         <View style={styles.card}>
           {alert.responderName ? (
-            <View style={styles.iconRow}><Image source={require("../../assets/profile.png")} style={styles.smallPhoto} /><View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.responderName}</Text><Text style={styles.small}>Barangay Responder</Text><Text style={styles.assigned}>Assigned</Text></View></View>
+            <View style={styles.iconRow}><Image source={require("../../assets/profile.png")} style={styles.smallPhoto} />
+            <View style={{ flex: 1 }}><Text style={styles.cardTitle}>{alert.responderName}</Text>
+              <Text style={styles.small}>Barangay Responder</Text>
+              <Text style={styles.assigned}>Assigned</Text>
+          </View></View>
           ) : (
-            <><Text style={styles.cardTitle}>No responder assigned</Text><Text style={styles.small}>This open alert is waiting for assignment.</Text><TouchableOpacity style={styles.assignButton} onPress={() => navigation.navigate('AssignResponder', { alertId: alert.id })}><Text style={styles.assignText}>Assign Responder</Text></TouchableOpacity></>
+            <><Text style={styles.cardTitle}>No responder assigned</Text>
+              <Text style={styles.small}>This open alert is waiting for assignment.</Text>
+              <TouchableOpacity style={styles.assignButton} onPress={() => navigation.navigate('AssignResponder', { alertId: alert.id })}>
+                <Text style={styles.assignText}>Assign Responder</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -82,9 +110,10 @@ export default function AlertDetails({ route, navigation }) {
         )}
         <View style={styles.confirmCard}>
           <Confirmation label="Guardian" value={alert.guardianStatus} />
+          <Divider />
           <Confirmation label="Responder" value={alert.responderName ? alert.responderStatus : 'Waiting'} />
-          {alert.guardianUnreachableReason ? <Text style={[styles.small, { marginTop: 8 }]}>Guardian unreachable{alert.guardianUnreachableBySystem ? ' (auto-flagged after grace period)' : ''}: {alert.guardianUnreachableReason}</Text> : null}
-          {alert.responderUnreachableReason ? <Text style={[styles.small, { marginTop: 6 }]}>Responder reported unable to reach location: {alert.responderUnreachableReason}</Text> : null}
+          {alert.guardianUnreachableReason ? <Text style={[styles.small, { marginTop: 10 }]}>Guardian unreachable{alert.guardianUnreachableBySystem ? ' (auto-flagged after grace period)' : ''}: {alert.guardianUnreachableReason}</Text> : null}
+          {alert.responderUnreachableReason ? <Text style={[styles.small, { marginTop: 10 }]}>Responder reported unable to reach location: {alert.responderUnreachableReason}</Text> : null}
           {guardianPending && (
             <TouchableOpacity style={styles.unreachableButton} onPress={() => setShowUnreachableModal(true)}>
               <Text style={styles.unreachableText}>Mark Guardian Unreachable</Text>
@@ -132,6 +161,46 @@ function Confirmation({ label, value }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' }, content: { padding: spacing.screen, paddingBottom: 0 , paddingTop: 4 }, scrollContent: { padding: spacing.screen, paddingTop: 0, paddingBottom: 30 }, back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4},
-  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 }, profilePhoto: { width: 64, height: 64, borderRadius: 32, borderWidth: 1.8, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 13 }, profileTextWrap: { flex: 1 }, name: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' }, meta: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 }, statusHeader: { flexWrap: 'wrap', gap: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 , ...alertLayout.headerRow }, statusPill: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, danger: { color: '#a83232', backgroundColor: '#fbd1d1' }, pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, closed: { color: '#288928', backgroundColor: '#a1fbaa' }, time: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' }, section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 15, marginBottom: 7 }, card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card }, iconRow: { flexDirection: 'row', alignItems: 'center', gap: 12 }, smallPhoto: { width: 45, height: 45, borderRadius: 23, backgroundColor: '#ddd' }, cardTitle: { fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' }, small: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular', marginTop: 2 }, note: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', lineHeight: Math.ceil(typography.caption * 1.5) }, mapButton: { borderWidth: 1, borderColor: '#245490', backgroundColor: '#d3e5f8', borderRadius: 8, paddingVertical: 7, alignItems: 'center', marginTop: 10 }, mapText: { color: '#245490', fontFamily: 'Poppins_500Medium', fontSize: typography.caption }, assigned: { color: '#288928', fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', marginTop: 3 }, assignButton: { borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 9, paddingVertical: 9, alignItems: 'center', marginTop: 10 }, assignText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, confirmCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 12, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card }, confirmRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#eee' }, confirmLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium' }, confirmPill: { minWidth: 90, textAlign: 'center', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, waiting: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, safe: { color: '#288928', backgroundColor: '#a1fbaa' }, notSafe: { color: '#a83232', backgroundColor: '#fbd1d1' }, escalationCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#fff5f5', borderRadius: 12, padding: 13, marginTop: 15 }, escalationTitle: { fontSize: typography.detail, color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, discrepancyCard: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#e3b1b1', backgroundColor: '#fff1f1', borderRadius: 12, padding: 12, marginBottom: 8 }, unreachableButton: { borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 9, paddingVertical: 9, alignItems: 'center', marginTop: 12 }, unreachableText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, closedCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#288928', backgroundColor: '#f2fff2', borderRadius: 12, padding: 13, marginTop: 15 }, closedText: { flex: 1, marginLeft: 10, color: '#288928', fontFamily: 'Poppins_500Medium', fontSize: typography.caption },
+  container: { flex: 1, backgroundColor: '#fff' }, 
+  content: { padding: spacing.screen, paddingBottom: 0 , paddingTop: 4 }, 
+  scrollContent: { padding: spacing.screen, paddingTop: 0, paddingBottom: 30 }, 
+  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4},
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
+  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 8 }, 
+
+  statusHeader: { flexWrap: 'wrap', gap: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 , ...alertLayout.headerRow }, 
+  statusPill: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, 
+  danger: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
+  pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
+  closed: { color: '#288928', backgroundColor: '#a1fbaa' }, 
+  time: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' }, 
+  section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 15, marginBottom: 7 }, 
+  card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card }, 
+  iconRow: { flexDirection: 'row', alignItems: 'center', gap: 12 }, smallPhoto: { width: 45, height: 45, borderRadius: 23, backgroundColor: '#ddd' }, 
+  cardTitle: { fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' }, 
+  note: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', lineHeight: Math.ceil(typography.caption * 1.5) }, 
+  mapButton: { borderWidth: 1, borderColor: '#245490', backgroundColor: '#d3e5f8', borderRadius: 8, paddingVertical: 7, alignItems: 'center', marginTop: 10 }, 
+  mapText: { color: '#245490', fontFamily: 'Poppins_500Medium', fontSize: typography.caption },
+  assigned: { color: '#288928', fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', marginTop: 3 }, 
+  assignButton: { borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 9, paddingVertical: 9, alignItems: 'center', marginTop: 10 }, 
+  assignText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, 
+  
+  confirmCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 12, paddingVertical: 6, paddingBottom: 10, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card }, 
+  confirmRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 8 }, 
+  confirmLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium' }, 
+  confirmPill: { minWidth: 90, textAlign: 'center', borderRadius: 9, paddingHorizontal: 9, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, 
+  waiting: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
+  safe: { color: '#288928', backgroundColor: '#a1fbaa' }, 
+  notSafe: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
+  
+  escalationCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#fff5f5', borderRadius: 12, padding: 13, marginTop: 15 }, 
+  escalationTitle: { fontSize: typography.detail, color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
+  discrepancyCard: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#e3b1b1', backgroundColor: '#fff1f1', borderRadius: 12, padding: 12, marginBottom: 8 }, 
+  unreachableButton: { borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 9, paddingVertical: 9, alignItems: 'center', marginTop: 12 }, 
+  unreachableText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, 
+  closedCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#288928', backgroundColor: '#f2fff2', borderRadius: 12, padding: 13, marginTop: 15 }, 
+  closedText: { flex: 1, marginLeft: 10, color: '#288928', fontFamily: 'Poppins_500Medium', fontSize: typography.caption },
 });

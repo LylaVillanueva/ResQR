@@ -87,14 +87,19 @@ export default function ProfileScreen({ route, navigation }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.back} onPress={() => navigation.goBack()}>‹ Back</Text>
-        <View style={styles.profileBar}>
-          <Image source={require("../../assets/profile.png")} style={styles.profilePhoto} />
-          <View style={styles.profileTextWrap}><Text style={styles.name}>{resident.name}</Text><Text style={styles.meta}>{resident.code || resident.id}</Text><Text style={styles.meta}>{resident.type}</Text></View>
+        <View style={[styles.residentCard, styles.shadow]}>
+          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <View style={{ flex: 1, margin: 0 }}>
+            <Text style={styles.contextTitle}>{resident.name}</Text>
+            <Text style={styles.small}>Role: {resident.role}</Text>
+            <Text style={styles.small}>ID Number: {resident.id}</Text>
+          </View>
         </View>
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.editButton} onPress={() => { setDraft(resident); setEditing(true); }}><Text style={styles.editButtonText}>Edit Information</Text></TouchableOpacity>
           <TouchableOpacity style={styles.qrButton} disabled={qrLoading} onPress={() => qrData ? setShowQR(true) : Alert.alert('Issue QR card?', 'Issuing a new QR card replaces any previously issued card for this resident.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Issue Card', onPress: viewQR }])}><Text style={styles.qrButtonText}>Issue QR Card</Text></TouchableOpacity>
         </View>
+        <View style={styles.divider} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -108,8 +113,26 @@ export default function ProfileScreen({ route, navigation }) {
           </TouchableOpacity>
         </View>
 
-        <Section title="Scan History">{residentAlerts.length ? residentAlerts.map((alert) => <View key={alert.id} style={styles.historyCard}><View style={styles.historyTop}><StatusBadge status={alert.status} label={alert.status === 'open' ? 'Open Alert' : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)} /><Text style={styles.time}>{alert.scannedAt}</Text></View><Text style={styles.historyText}>QR scanned by {alert.scannedBy}</Text><Text style={styles.location}>📍 {alert.location}</Text></View>) : <Empty text="No scan history available." />}</Section>
-        <Section title="Alert History">{residentAlerts.length ? residentAlerts.map((alert) => <View key={alert.id + '-alert'} style={styles.historyCard}><View style={styles.historyTop}><StatusBadge status={alert.status} label={alert.status === 'open' ? 'Open Alert' : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)} /><Text style={styles.time}>{alert.scannedAt}</Text></View><Text style={styles.historyText}>{alert.status === 'escalated' ? alert.escalationReason : alert.status === 'closed' ? 'Both confirmations completed' : alert.status === 'open' ? 'Waiting for responder assignment' : 'Waiting for confirmation'}</Text><TouchableOpacity onPress={() => navigation.navigate('AlertDetails', { alertId: alert.id })}><Text style={styles.detailLink}>View Alert Details ›</Text></TouchableOpacity></View>) : <Empty text="No alert history available." />}</Section>
+        <Section title="Scan History">{residentAlerts.length ? residentAlerts.map((alert) => <View key={alert.id} style={styles.historyCard}>
+          <View style={styles.historyTop}>
+            <StatusBadge status={alert.status} label={alert.status === 'open' ? 'Open Alert' : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)} />
+            <Text style={styles.time}>{alert.scannedAt}</Text>
+            </View>
+              <Text style={styles.historyText}>QR scanned by {alert.scannedBy}</Text>
+              <Text style={styles.location}>📍 {alert.location}</Text>
+            </View>
+          ) : <Empty text="No scan history available." />}</Section>
+        <Section title="Alert History">{residentAlerts.length ? residentAlerts.map((alert) => <View key={alert.id + '-alert'} style={styles.historyCard}>
+          <View style={styles.historyTop}>
+            <StatusBadge status={alert.status} label={alert.status === 'open' ? 'Open Alert' : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)} />
+            <Text style={styles.time}>{alert.scannedAt}</Text>
+            </View>
+              <Text style={styles.historyText}>{alert.status === 'escalated' ? alert.escalationReason : alert.status === 'closed' ? 'Both confirmations completed' : alert.status === 'open' ? 'Waiting for responder assignment' : 'Waiting for confirmation'}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('AlertDetails', { alertId: alert.id })}>
+                <Text style={styles.detailLink}>View Alert Details ›</Text>
+              </TouchableOpacity>
+            </View>
+          ) : <Empty text="No alert history available." />}</Section>
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -139,6 +162,67 @@ function Field({ label, value, onChangeText, placeholder, keyboardType }) { retu
 function Empty({ text }) { return <Text style={styles.empty}>{text}</Text>; }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' }, content: { padding: spacing.screen, paddingTop: 4, paddingBottom: 0 }, scrollContent: { padding: spacing.screen, paddingTop: 4, paddingBottom: 30 }, editScroll: { padding: 20, paddingTop: 4, paddingBottom: 30 }, back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4}, heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold' , marginBottom: 8 }, profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 }, profilePhoto: { width: 64, height: 64, borderRadius: 32, borderWidth: 1.8, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 13 }, profileTextWrap: { flex: 1 }, name: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' }, meta: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 }, actionRow: { flexDirection: 'row', gap: 8, marginBottom: 4 }, editButton: { flex: 1, backgroundColor: '#d3e5f8', borderColor: '#245490', borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' , minHeight: 44 }, editButtonText: { color: '#245490', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, qrButton: { flex: 1, backgroundColor: '#ffdcdc', borderColor: '#a83232', borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' }, qrButtonText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption }, section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 14, marginBottom: 7 }, card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, backgroundColor: '#fff', shadowColor: '#777', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }, infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#eee' }, infoLabel: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' }, infoValue: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', maxWidth: '58%', textAlign: 'right' }, historyCard: { borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 9 }, historyTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }, statusPill: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, danger: { color: '#a83232', backgroundColor: '#fbd1d1' }, pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, closed: { color: '#288928', backgroundColor: '#a1fbaa' }, time: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' }, historyText: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 5 }, location: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 }, detailLink: { fontSize: typography.caption, color: '#245490', fontFamily: 'Poppins_500Medium', marginTop: 5 }, empty: { padding: 14, textAlign: 'center', color: '#888', fontFamily: 'Poppins_400Regular', fontSize: typography.caption }, qrBox: { margin: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 14, padding: 20, alignItems: 'center' }, qrPlaceholder: { width: 260, height: 260, backgroundColor: '#f3f3f3', borderWidth: 1, borderColor: '#ccc', borderRadius: 10, alignItems: 'center', justifyContent: 'center' }, qrPlaceholderText: { color: '#999', textAlign: 'center', fontFamily: 'Poppins_500Medium' }, qrName: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginTop: 15 }, qrDetail: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginTop: 3 }, primaryButton: { marginTop: 18, backgroundColor: '#a83232', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginHorizontal: 20 , minHeight: spacing.control, justifyContent: 'center' }, primaryButtonText: { color: '#fff', fontFamily: 'Poppins_600SemiBold' }, fieldWrap: { marginBottom: spacing.field }, label: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#444', marginBottom: 10 }, input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, paddingHorizontal: 13, paddingVertical: 12, fontFamily: 'Poppins_400Regular', fontSize: typography.body, backgroundColor: '#f2f2f2' , minHeight: spacing.control }, sectionLabel: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 5, marginBottom: 3 }, pickerLike: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }, relationshipOption: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7, marginRight: 6, marginBottom: 6 }, relationshipActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, relationshipText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#666' }, relationshipTextActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, cancelButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginHorizontal: 20, marginTop: 9 }, cancelText: { color: '#a83232', fontFamily: 'Poppins_500Medium' },
-  debugCard: { borderWidth: 1, borderStyle: 'dashed', borderColor: '#999', borderRadius: 12, padding: 12, marginTop: 16 }, debugTitle: { fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', color: '#555', marginBottom: 4 }, debugText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#777', lineHeight: Math.ceil(typography.caption * 1.5), marginBottom: 10 }, debugButton: { borderWidth: 1, borderColor: '#666', borderRadius: 9, paddingVertical: 10, alignItems: 'center', backgroundColor: '#f2f2f2' }, debugButtonText: { color: '#333', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption },
+  container: { flex: 1, backgroundColor: '#fff' },
+  content: { padding: spacing.screen, paddingTop: 4, paddingBottom: 0 },
+  scrollContent: { padding: spacing.screen, paddingTop: 4, paddingBottom: 30 },
+  editScroll: { padding: 20, paddingTop: 4, paddingBottom: 30 },
+  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4 },
+  section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 14, marginBottom: 7 },
+  sectionLabel: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 5, marginBottom: 3 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
+  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
+  divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 8 }, 
+
+  actionRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
+  editButton: { flex: 1, backgroundColor: '#d3e5f8', borderColor: '#245490', borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center', minHeight: 44 },
+  editButtonText: { color: '#245490', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption },
+  qrButton: { flex: 1, backgroundColor: '#ffdcdc', borderColor: '#a83232', borderWidth: 1, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  qrButtonText: { color: '#a83232', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption },
+
+  card: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, backgroundColor: '#fff', shadowColor: '#777', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#eee' },
+  infoLabel: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' },
+  infoValue: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', maxWidth: '58%', textAlign: 'right' },
+
+  historyCard: { borderBottomWidth: 1, borderBottomColor: '#eee', paddingVertical: 9 },
+  historyTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  statusPill: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 3, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' },
+  danger: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' },
+  closed: { color: '#288928', backgroundColor: '#a1fbaa' },
+  time: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' },
+  historyText: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 5 },
+  location: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  detailLink: { fontSize: typography.caption, color: '#245490', fontFamily: 'Poppins_500Medium', marginTop: 5 },
+  empty: { padding: 14, textAlign: 'center', color: '#888', fontFamily: 'Poppins_400Regular', fontSize: typography.caption },
+
+  qrBox: { margin: 20, borderWidth: 1, borderColor: '#ddd', borderRadius: 14, padding: 20, alignItems: 'center' },
+  qrPlaceholder: { width: 260, height: 260, backgroundColor: '#f3f3f3', borderWidth: 1, borderColor: '#ccc', borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  qrPlaceholderText: { color: '#999', textAlign: 'center', fontFamily: 'Poppins_500Medium' },
+  qrName: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginTop: 15 },
+  qrDetail: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginTop: 3 },
+  primaryButton: { marginTop: 18, backgroundColor: '#a83232', borderRadius: 10, paddingVertical: 16, alignItems: 'center', marginHorizontal: 20, minHeight: spacing.control, justifyContent: 'center' },
+  primaryButtonText: { color: '#fff', fontFamily: 'Poppins_600SemiBold' },
+
+  fieldWrap: { marginBottom: spacing.field },
+  label: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#444', marginBottom: 10 },
+  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 10, paddingHorizontal: 13, paddingVertical: 12, fontFamily: 'Poppins_400Regular', fontSize: typography.body, backgroundColor: '#f2f2f2', minHeight: spacing.control },
+
+  pickerLike: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 },
+  relationshipOption: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 7, marginRight: 6, marginBottom: 6 },
+  relationshipActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' },
+  relationshipText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#666' },
+  relationshipTextActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' },
+
+  cancelButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginHorizontal: 20, marginTop: 9 },
+  cancelText: { color: '#a83232', fontFamily: 'Poppins_500Medium' },
+
+  debugCard: { borderWidth: 1, borderStyle: 'dashed', borderColor: '#999', borderRadius: 12, padding: 12, marginTop: 16 },
+  debugTitle: { fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', color: '#555', marginBottom: 4 },
+  debugText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#777', lineHeight: Math.ceil(typography.caption * 1.5), marginBottom: 10 },
+  debugButton: { borderWidth: 1, borderColor: '#666', borderRadius: 9, paddingVertical: 10, alignItems: 'center', backgroundColor: '#f2f2f2' },
+  debugButtonText: { color: '#333', fontFamily: 'Poppins_600SemiBold', fontSize: typography.caption },
 });

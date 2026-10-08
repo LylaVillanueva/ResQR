@@ -10,7 +10,7 @@ import { useAppData } from "../../lib/AppDataContext";
 
 const filters = [
   { key: 'all', label: 'All' },
-  { key: 'Senior Citizen', label: 'SC' },
+  { key: 'Senior Citizen', label: 'Senior Citizen' },
   { key: 'Person with Disability', label: 'PWD' },
 ];
 
@@ -41,7 +41,6 @@ export default function ResidentScreen({ navigation }) {
             <Text style={styles.manageText}>Manage Users</Text>
           </TouchableOpacity>
         </View>
-
         <View style={styles.divider} />
 
         <View style={styles.searchBar}>
@@ -106,7 +105,8 @@ export default function ResidentScreen({ navigation }) {
 
       <View style={styles.buttonContent}>
         <TouchableOpacity style={styles.enrollButton} onPress={() => navigation.navigate('EnrollNewResident')}>
-          <Text style={styles.enrollButtonText}>+ Enroll New Resident</Text>
+          <FontAwesome5 name="user-plus" size={14} color="#a83232" style={{ marginTop: -4 }}  />
+          <Text style={styles.enrollButtonText}> Enroll New Resident</Text>
         </TouchableOpacity>
       </View>
 
@@ -117,15 +117,17 @@ export default function ResidentScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: spacing.screen, paddingBottom: 0 },
+  content: { padding: spacing.screen, paddingBottom: 0, marginTop: -14 },
   scrollView: { flex: 1 },
   scrollContent: { padding: spacing.screen, paddingTop: 0, marginTop: 20 },
   buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
-  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4 }, 
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
-  manageButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 8, paddingHorizontal: 9, paddingVertical: 6 , minHeight: 44 },
+  
+  manageButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 , minHeight: 40 },
   manageText: { color: '#a83232', fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', marginLeft: 5 },
+  
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10 , minHeight: spacing.control },
   searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333' , minHeight: spacing.control, backgroundColor: '#f2f2f2' },
   filterBar: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: -10, marginBottom: 6 },
@@ -134,15 +136,18 @@ const styles = StyleSheet.create({
   filterButtonActive: { backgroundColor: '#ffdcdc', borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 9 },
   filterLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
   filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
-  residentCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  
+  residentCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 10, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   residentPhoto: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#c4c4c4', marginRight: 14 },
   residentTextWrap: { flex: 1 },
   residentName: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', marginBottom: 2 },
   residentType: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginBottom: 1 },
   residentMeta: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888' },
+  
   empty: { alignItems: 'center', padding: 40 },
   emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
   emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 4, textAlign: 'center' },
-  enrollButton: { borderWidth: 1, borderColor: '#a83232', borderRadius: 10, backgroundColor: '#ffdcdc', paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
+  
+  enrollButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 10, backgroundColor: '#ffdcdc', paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
   enrollButtonText: { color: '#a83232', fontSize: typography.detail, fontFamily: 'Poppins_500Medium' },
 });

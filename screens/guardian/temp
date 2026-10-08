@@ -1,0 +1,30 @@
+        <View style={[styles.scanCard, styles.scanCardActive]}>
+          <View style={styles.scanCardTextWrap}>
+            <Text style={[styles.scanCardTitle, styles.statusOpen, styles.shadow]}>Alert Open</Text>
+            <Text style={styles.scanCardTime}>12:00 PM</Text>
+          </View>
+          
+          <Text style={styles.heading1}>[Resident Name]</Text>
+          <Text style={styles.scanCardSubtitle}>Scanned by a Bystander</Text>
+          <Text style={styles.scanCardSubtitle}>Note: Optional Note that the bystander sent through the 
+            public landing page. This is very helpful for the guardian and responder</Text>
+          
+          <View style={styles.scanCardButtonWrap}>
+            <TouchableOpacity>
+              <Text style={[styles.scanCardButtons, styles.statusClosed, styles.shadow]}>Mark Safe</Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={[styles.scanCardButtons, styles.statusOpen, styles.shadow]}>Not Safe</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+
+        <Section compact title={t('accountInformation')} titleStyle={{ marginTop: 10 }}>
+          <InfoRow label={t('name')} value={account.fullName} />
+          <InfoRow label="Mobile Number" value={phone} />
+          <InfoRow label="Relationship" value={relationship} />
+          <InfoRow label="Role" value="Guardian" />
+          <InfoRow label={t('barangay')} value={account.barangayName} />
+          <InfoRow label="Wards Linked" value={`${wards.length} ward${wards.length === 1 ? '' : 's'}`} />
+        </Section>
