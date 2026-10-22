@@ -7,16 +7,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
 import { useAppData } from "../../lib/AppDataContext";
+import { Dropdown } from 'react-native-element-dropdown';
 
 const filters = [
-  { key: 'all', label: 'All' },
+  { key: 'all', label: 'All Types' },
   { key: 'Senior Citizen', label: 'Senior Citizen' },
-  { key: 'Person with Disability', label: 'PWD' },
+  { key: 'Person with Disability', label: 'Person with Disability' },
 ];
 
-// Enrollment also creates a residents row for staff/guardian sign-ups (their
-// login account needs a linked person record) — those aren't residents and
-// shouldn't show up in this list.
 const STAFF_TYPES = ['Guardian', 'Responder', 'Barangay Official'];
 
 export default function ResidentScreen({ navigation }) {
@@ -54,26 +52,15 @@ export default function ResidentScreen({ navigation }) {
           />
         </View>
 
-        <View style={styles.filterBar}>
+        <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Filter by:</Text>
-          <View style={styles.filterWrap}>
-            {filters.map((filter) => {
-              const active = activeFilter === filter.key;
-              return (
-                <TouchableOpacity
-                  key={filter.key}
-                  style={[styles.filterButton, active && styles.filterButtonActive]}
-                  onPress={() => setActiveFilter(filter.key)}
-                >
-                  <Text style={[styles.filterLabel, active && styles.filterLabelActive]}>
-                    {filter.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <Dropdown
+            style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
+            data={filters} labelField="label" valueField="key" value={activeFilter}
+            onChange={(item) => setActiveFilter(item.key)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
+          />
         </View>
-
         <View style={styles.divider} />
       </View>
 
@@ -96,7 +83,8 @@ export default function ResidentScreen({ navigation }) {
         ))}
 
         {filteredResidents.length === 0 && (
-          <View style={styles.empty}>
+          <View style={styles.emptyWrap}>
+            <FontAwesome5 name="user-slash" size={38} color="#bbb" />
             <Text style={styles.emptyTitle}>No residents found</Text>
             <Text style={styles.emptyText}>Try another name, ID, or resident type.</Text>
           </View>
@@ -130,13 +118,12 @@ const styles = StyleSheet.create({
   
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10 , minHeight: spacing.control },
   searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333' , minHeight: spacing.control, backgroundColor: '#f2f2f2' },
-  filterBar: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: -10, marginBottom: 6 },
-  filterWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 8 },
-  filterButton: { backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 5, marginHorizontal: 2, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' },
-  filterButtonActive: { backgroundColor: '#ffdcdc', borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 9 },
-  filterLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
-  
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: -4, marginBottom: 12, gap: 10 },
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
+  filterText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+
   residentCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 10, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   residentPhoto: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#c4c4c4', marginRight: 14 },
   residentTextWrap: { flex: 1 },
@@ -144,9 +131,9 @@ const styles = StyleSheet.create({
   residentType: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginBottom: 1 },
   residentMeta: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888' },
   
-  empty: { alignItems: 'center', padding: 40 },
-  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
-  emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 4, textAlign: 'center' },
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
   
   enrollButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 10, backgroundColor: '#ffdcdc', paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
   enrollButtonText: { color: '#a83232', fontSize: typography.detail, fontFamily: 'Poppins_500Medium' },

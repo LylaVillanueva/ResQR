@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
 import { useAppData } from "../../lib/AppDataContext";
+import { typeStyles } from "../../lib/auditTypes";
 
 function getStatusLabel(alert) {
   if (alert.status === 'escalated') return 'Escalated';
@@ -112,21 +113,25 @@ export default function HomeScreen({ navigation }) {
         </View>
 
         <View style={[styles.headCard, styles.shadow]}>
-          {recentActivity.map((item, index) => (
-            <React.Fragment key={index}>
-              <View style={styles.activityRow}>
-                <View style={styles.activityIcon}>
-                  <FontAwesome5 name={index === 0 ? 'user-check' : index === 1 ? 'user-plus' : 'check'} size={13} color="#a83232" />
+          {recentActivity.map((item, index) => {
+            const type = typeStyles[item.category] || typeStyles.system;
+            return (
+              <React.Fragment key={item.id || index}>
+                <View style={styles.activityRow}>
+                  <View style={[styles.activityIcon, { backgroundColor: type.background }]}>
+                    <FontAwesome5 name={type.icon} size={14} color={type.color} />
+                  </View>
+                  <View style={{ flex: 1, paddingRight: 6 }}>
+                    <Text style={styles.activityTitle}>{item.title}</Text>
+                    <Text style={styles.activityDetail}>{item.subject}</Text>
+                    <Text style={styles.activityDetail}>{item.detail}</Text>
+                  </View>
+                  <Text style={styles.activityTime}>{item.time}</Text>
                 </View>
-                <View style={{ flex: 1, paddingRight: 6 }}>
-                  <Text style={styles.activityTitle}>{item.title}</Text>
-                  <Text style={styles.activityDetail}>{item.detail}</Text>
-                </View>
-                <Text style={styles.activityTime}>{item.time}</Text>
-              </View>
-              {index < recentActivity.length - 1 && <View style={styles.activityDivider} />}
-            </React.Fragment>
-          ))}
+                {index < recentActivity.length - 1 && <View style={styles.activityDivider} />}
+              </React.Fragment>
+            );
+          })}
         </View>
       </ScrollView>
       <TabBar />

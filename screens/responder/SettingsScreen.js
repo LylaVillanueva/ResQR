@@ -33,21 +33,25 @@ export default function SettingsScreen({ navigation, setSession }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <View style={styles.profileBar}>
-          <Image source={require("../../assets/profile.png")} style={styles.photo} accessible={false} />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.name}>{account.fullName}</Text>
-            <Text style={styles.meta}>Barangay Responder • {account.barangayName}</Text>
-          </View>
-        </View>
-        <Text style={styles.heading} accessibilityRole="header">{t('settings')}</Text>
+        <Text style={styles.heading}>Settings</Text>
         <View style={styles.divider} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={[styles.residentCard, styles.shadow]}>
+          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <View style={{ flex: 1, margin: 0 }}>
+            <Text style={styles.contextTitle}>{account.fullName}</Text>
+            <Text style={styles.small}>Role: {account.role}</Text>
+            <Text style={styles.small}>ID Number: {account.id}</Text>
+          </View>
+        </View>
+
         <Section compact title={t('accountInformation')} titleStyle={{ marginTop: 10 }}>
           <InfoRow label={t('name')} value={account.fullName} />
+          <Divider />
           <InfoRow label={t('position')} value="Barangay Responder" />
+          <Divider />
           <InfoRow label={t('barangay')} value={account.barangayName} />
         </Section>
 
@@ -72,15 +76,15 @@ export default function SettingsScreen({ navigation, setSession }) {
         <Section compact title={t('helpSupport')}>
           <LinkRow compact icon="question-circle" label={t('faq')} onPress={() => info('FAQ', 'Frequently asked questions about using QRAlalay.')} />
           <Divider />
-          <LinkRow compact icon="phone" label={t('barangayContactNumber')} value="View contact" onPress={() => info('Barangay Contact', 'Ask your barangay office for its official contact number.')} />
+          <LinkRow compact icon="phone" label={t('barangayContactNumber')} onPress={() => info('Barangay Contact', 'Ask your barangay office for its official contact number.')} />
           <Divider />
           <LinkRow compact icon="bug" label={t('reportProblem')} onPress={() => info('Report a Problem', 'Please provide the issue you encountered.')} />
         </Section>
 
         <Section compact title={t('about')}>
-          <LinkRow compact icon="info-circle" label={t('aboutQrAlalay')} onPress={() => info('About QRAlalay', 'QRAlalay is a barangay emergency response and resident safety system that uses QR-based identification and coordinated Guardian–Responder confirmation.')} />
+          <LinkRow compact icon="check-circle" label={t('appVersion')} value="1.0" />
           <Divider />
-          <LinkRow compact label={t('appVersion')} value="1.0" />
+          <LinkRow compact icon="info-circle" label={t('aboutQrAlalay')} onPress={() => navigation.navigate('Legal', { type: 'about' })} />
           <Divider />
           <LinkRow compact icon="file-contract" label={t('termsOfService')} onPress={() => navigation.navigate('Legal', { type: 'terms' })} />
           <Divider />
@@ -101,12 +105,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.surface },
   content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 },
   scrollContent: { padding: spacing.screen, paddingTop: 0, paddingBottom: 30 },
-  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
+  profileBar: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 10 },
   photo: { width: 52, height: 52, borderRadius: 26, borderWidth: 1.8, borderColor: colors.primary, backgroundColor: colors.border, marginRight: 13 },
   name: { fontSize: typography.body, fontFamily: font.semibold },
   meta: { fontSize: typography.caption, color: colors.textSecondary, fontFamily: font.regular, marginTop: 2 },
   heading: { fontSize: typography.title, fontFamily: font.semibold, marginBottom: 4 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
-  logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.dangerSurface, borderRadius: radius.md, paddingVertical: 13, marginTop: 22 },
-  logoutText: { color: colors.primary, fontFamily: font.semibold },
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16, marginTop: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
+  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
+  logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.dangerSurface, borderRadius: radius.md, paddingVertical: 13, marginTop: 22 },
+  logoutText: { color: colors.primary, fontFamily: font.semibold, marginLeft: 7 },
 });

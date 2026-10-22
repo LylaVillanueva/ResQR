@@ -8,14 +8,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/GuardianTabButtons';
 import { useAppData } from '../../lib/AppDataContext';
+import { Dropdown } from 'react-native-element-dropdown';
 
 const filters = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'open', label: 'Open' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'escalated', label: 'Escalated' },
-  { key: 'closed', label: 'Closed' },
+  { key: 'all', label: 'All Alerts' },
+  { key: 'active', label: 'Active Alert' },
+  { key: 'open', label: 'Open Alert' },
+  { key: 'pending', label: 'Pending Confirmation' },
+  { key: 'escalated', label: 'Escalated Alert' },
+  { key: 'closed', label: 'Closed Alert' },
 ];
 
 function getSubtitle(alert) {
@@ -41,13 +42,11 @@ export default function AlertScreen({ navigation }) {
   );
   const wardIds = guardianAccount?.wardIds || [];
 
-  // Alerts that belong to this guardian's wards
   const myAlerts = useMemo(
     () => alerts.filter((alert) => wardIds.includes(alert.residentId)),
     [alerts, wardIds]
   );
 
-  // Apply the selected filter, then sort by priority
   const visibleAlerts = useMemo(() => {
     const filtered = myAlerts.filter((alert) => {
       if (activeFilter === 'all') return true;
@@ -65,15 +64,14 @@ export default function AlertScreen({ navigation }) {
         </View>
         <Text style={styles.subheading}>Monitor emergency alert status</Text>
 
-        <View style={styles.filterScrollWrap}>
-          <Text style={[styles.filterLabel, {marginRight: 10}]}>Filter by:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterWrap}>
-            {filters.map((f) => (
-              <TouchableOpacity key={f.key} style={[styles.filterButton, activeFilter === f.key && styles.filterActive]} onPress={() => navigation.setParams({ filter: f.key })}>
-                <Text style={[styles.filterLabel, activeFilter === f.key && styles.filterLabelActive]}>{f.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>Filter by:</Text>
+          <Dropdown
+            style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
+            data={filters} labelField="label" valueField="key" value={activeFilter}
+            onChange={(item) => setActiveFilter(item.key)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
+          />
         </View>
         <View style={styles.divider} />
       </View>
@@ -81,10 +79,10 @@ export default function AlertScreen({ navigation }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {visibleAlerts.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <FontAwesome5 name="clipboard-check" size={40} color="#288928" />
+            <FontAwesome5 name="clipboard-check" size={38} color="#bbb" />
             <Text style={styles.emptyTitle}>NO ALERTS FOUND</Text>
             <Text style={styles.emptyText}>
-              There are no alerts matching{`\n`}this filter for your wards.
+              There are no alerts matching this filter for your wards.
             </Text>
           </View>
         ) : (
@@ -94,10 +92,11 @@ export default function AlertScreen({ navigation }) {
               style={[styles.alertCard, alert.status === 'escalated' && styles.escalatedCard]}
             >
               <View style={styles.alertCardTextWrap}>
-                <Text style={[styles.statusPill, styles[`status_${alert.status}`]]}>
-                  {alert.status === 'open'
-                    ? 'Open Alert'
-                    : alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                <Text style={[styles.alertCardTitle, statusStyle(alert.status)]}>
+                  {alert.status === 'escalated' ? 'Alert Escalated'
+                    : alert.status === 'closed' ? 'Alert Closed'
+                    : alert.status === 'pending' ? 'Alert Pending'
+                    : 'Open Alert'}
                 </Text>
                 <Text style={styles.time}>{alert.scannedAt}</Text>
               </View>
@@ -126,7 +125,7 @@ export default function AlertScreen({ navigation }) {
                 <Text style={[styles.statusText, alert.responderStatus === 'Not Safe' ? styles.notSafe : alert.responderStatus === 'Safe' ? styles.safe : styles.waiting]}>Responder: {'\n'}{alert.responderStatus !== 'Pending' ? alert.responderStatus: alert.responderName ? 'Assigned': 'Waiting'}</Text>
               </View>
 
-              {alert.status !== 'closed' && (
+              {alert.status !== 'closed' && alert.guardianStatus !== 'Safe' && alert.guardianStatus !== 'Not Safe' &&  (
                 <View style={styles.buttonWrap}>
                   <TouchableOpacity
                     style={[styles.button, styles.buttonSafe, alert.guardianStatus === 'Safe' && styles.buttonDisabled]}
@@ -190,28 +189,27 @@ const styles = StyleSheet.create({
   scrollContent: { padding: spacing.screen, paddingTop: 12 , paddingBottom: 32 }, 
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
   heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4 }, 
+  heading1: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginLeft: 0, marginTop: 8, marginBottom: 6},
   subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginTop: -8 }, 
   divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 10 },
 
-  filterScrollWrap: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: 8, marginBottom: -4 },
-  filterWrap: { paddingRight: 10 }, 
-  filterButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, backgroundColor: '#fff' }, 
-  filterActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, 
-  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' }, 
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
-  
-  alertCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card },
-  escalatedCard: { borderColor: '#a83232' },
-  alertCardTextWrap: { flexWrap: 'wrap', gap: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 , ...alertLayout.headerRow },
-  statusPill: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },
-  status_open: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
-  status_pending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' }, 
-  status_escalated: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
-  status_closed: { color: '#288928', backgroundColor: '#a1fbaa' },
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 2, gap: 10 },
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
+  filterText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+
+  alertCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, ...alertLayout.card },
+  alertCardActive: { borderColor: '#a83232', shadowColor: '#a83232', shadowOffset: { width: 2, height: 4 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 3 },
+  alertCardTextWrap: { flexWrap: 'wrap', gap: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8, ...alertLayout.headerRow },
+  alertCardTitle: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },  alertOpen: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  alertPending: { color: '#8a6d1d', backgroundColor: '#fbf1a1' },
+  alertEscalated: { color: '#a83232', backgroundColor: '#fbd1d1' },
+  alertClosed: { color: '#288928', backgroundColor: '#a1fbaa' },
+  alertTime: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
+  alertSubtitle: { fontSize: typography.detail, fontFamily: 'Poppins_400Regular', marginBottom: 9 },
   time: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
-  heading1: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginLeft: 0, marginTop: 8, marginBottom: 6},
   typeText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#245490', marginLeft: 0, marginBottom: 4},
-  alertSubtitle: { fontSize: typography.detail, fontFamily: 'Poppins_400Regular', marginLeft: 0, marginBottom: 6},
   locationBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff7f7', borderWidth: 1, borderColor: '#f0cccc', borderRadius: 10, padding: 10, marginBottom: 8, ...alertLayout.location },
   locationLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#888', marginLeft: 10 },
   locationText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#333', marginLeft: 10, marginTop: 1 },
@@ -231,8 +229,7 @@ const styles = StyleSheet.create({
   detailsButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#245490', paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#d3e5f8', minHeight: 48, ...alertLayout.details },
   detailsText: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#245490' },
   
-  emptyWrap: { alignItems: 'center', padding: 50, marginTop: 40 },
-  empty: { alignItems: 'center', padding: 50 },
-  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 8 },
-  emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 3 },
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
 });

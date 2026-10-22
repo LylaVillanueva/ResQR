@@ -46,8 +46,6 @@ export default function SettingsScreen({ navigation, setSession }) {
           <Divider />
           <InfoRow compact label={t('Mobile Number')} value={phone} />
           <Divider />
-          <InfoRow compact label={t('Relationship')} value={relationship} />
-          <Divider />
           <InfoRow compact label={t('position')} value={'Barangay Secretary'} />
           <Divider />
           <InfoRow compact label={t('barangay')} value={account.barangayName} />

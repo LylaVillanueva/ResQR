@@ -7,24 +7,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from '../../component/GuardianTabButtons';
 import { useAppData } from '../../lib/AppDataContext';
+import { typeStyles } from "../../lib/auditTypes";
+import { Dropdown } from 'react-native-element-dropdown';
 
 const filters = [
-  { key: 'all', label: 'All' },
-  { key: 'alert', label: 'Alert Log' },
-  { key: 'escalation', label: 'Escalation Log' },
-  { key: 'assignment', label: 'Assign Log' },
+  { label: 'All Activity', value: 'all' },
+  { label: 'Alert Closed', value: 'alertClosed' },
+  { label: 'Alert Escalated', value: 'alertEscalated' },
+  { label: 'Alert Confirmation', value: 'alert' },
+  { label: 'System', value: 'system' },
 ];
-
-const typeStyles = {
-  account: { label: 'Account', icon: 'user-plus', color: '#245490', background: '#d3e5f8' },
-  assignment: { label: 'Responder Assignment', icon: 'user-shield', color: '#245490', background: '#d3e5f8' },
-  alertClosed: { label: 'Alert Closed', icon: 'check-circle', color: '#288928', background: '#a1fbaa' },
-  alertEscalated: { label: 'Alert Escalated', icon: 'exclamation-triangle', color: '#a83232', background: '#fbd1d1' },
-  alert: { label: 'Alert', icon: 'bell', color: '#a83232', background: '#fbd1d1' },
-  resident: { label: 'Resident Update', icon: 'user-edit', color: '#245490', background: '#d3e5f8' },
-  user: { label: 'User Update', icon: 'user-cog', color: '#6b3fb5', background: '#eadcff' },
-  system: { label: 'System', icon: 'cog', color: '#666', background: '#eeeeee' },
-};
 
 export default function AuditLogScreen({ navigation }) {
   const { auditLogs, users, account } = useAppData();
@@ -106,34 +98,21 @@ export default function AuditLogScreen({ navigation }) {
           />
         </View>
 
-        <View style={styles.filterBar}>
+        <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Filter by:</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filterWrap}
-          >
-            {filters.map((f) => (
-              <TouchableOpacity
-                key={f.key}
-                style={[styles.filterButton, activeFilter === f.key && styles.filterButtonActive]}
-                onPress={() => setActiveFilter(f.key)}
-              >
-                <Text
-                  style={[styles.filterLabel, activeFilter === f.key && styles.filterLabelActive]}
-                >
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Dropdown
+            style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
+            data={filters} labelField="label" valueField="value" value={activeFilter}
+            onChange={(item) => setActiveFilter(item.value)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
+          />
         </View>
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {Object.keys(groupedLogs).length === 0 ? (
-          <View style={styles.emptyState}>
+          <View style={styles.emptyWrap}>
             <FontAwesome5 name="clipboard-list" size={38} color="#bbb" />
             <Text style={styles.emptyTitle}>No activity found</Text>
             <Text style={styles.emptyText}>Try another search or filter.</Text>
@@ -209,12 +188,11 @@ const styles = StyleSheet.create({
 
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10, minHeight: spacing.control },
   searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333', minHeight: spacing.control, backgroundColor: '#f2f2f2' },
-  filterBar: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: -10, marginBottom: 6 },
-  filterWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginLeft: 8 },
-  filterButton: { backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 10, paddingVertical: 5, marginHorizontal: 2, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' },
-  filterButtonActive: { backgroundColor: '#ffdcdc', borderColor: '#a83232', paddingVertical: 4, paddingHorizontal: 9 },
-  filterLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: -4, marginBottom: 12, gap: 10 },
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
+  filterText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
 
   dateGroup: { marginBottom: 4 },
   dateHeading: { fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold', color: '#555', marginBottom: 9, marginLeft: 2 },
@@ -231,7 +209,7 @@ const styles = StyleSheet.create({
   actorText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888', marginLeft: 6, flex: 1 },
   chevron: { marginLeft: 8 },
 
-  emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 70 },
-  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', color: '#555', marginTop: 12 },
-  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#999', marginTop: 3 },
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
 });

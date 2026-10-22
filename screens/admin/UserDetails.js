@@ -257,6 +257,7 @@ const styles = StyleSheet.create({
   small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
   contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
   divider: { borderTopWidth: 1, borderTopColor: '#ddd', marginTop: 8 },
+  
   statusHeader: { flexWrap: 'wrap', gap: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4, ...alertLayout.headerRow },
   statusPill: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' },
   statusLabel: { fontSize: typography.caption, color: '#777', fontFamily: 'Poppins_400Regular' },

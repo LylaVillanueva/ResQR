@@ -6,7 +6,6 @@ import Text from "../../component/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
-import ReasonPromptModal from "../../component/ReasonPromptModal";
 import { Divider } from "../../component/ui";
 import { useAppData } from "../../lib/AppDataContext";
 
@@ -97,7 +96,7 @@ export default function AlertDetails({ route, navigation }) {
 
         <Text style={styles.section}>Confirmation Status</Text>
         <View style={styles.actionNotice}>
-          <FontAwesome5 name="user-check" size={15} color="#a83232" />
+          <FontAwesome5 name="user-check" size={15} color="#a83232" style={{ marginHorizontal: 6 }} />
           <Text style={styles.actionNoticeText}>As the Guardian, confirm whether your ward is safe or still needs assistance.</Text>
         </View>
         {alert.hasDiscrepancy && (
@@ -115,45 +114,17 @@ export default function AlertDetails({ route, navigation }) {
           <Confirmation label="Responder" value={alert.responderName ? alert.responderStatus : 'Waiting'} />
         </View>
 
-        {alert.escalationReason ? (
-          <View style={styles.escalationBox}>
-            <FontAwesome5 name="exclamation-triangle" size={16} color="#a83232" />
-            <View style={{ flex: 1, marginLeft: 9 }}>
-              <Text style={styles.escalationTitle}>Escalation Reason</Text>
-              <Text style={styles.escalationText}>{alert.escalationReason}</Text>
-            </View>
-          </View>
-        ) : null}
-
-        {alert.status !== 'closed' && (
-          <View style={styles.buttonWrap}>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonSafe, alert.guardianStatus === 'Safe' && styles.buttonDisabled]}
-              disabled={alert.guardianStatus === 'Safe'}
-              onPress={() => navigation.navigate('ConfirmationScreen', {
-                status: 'Safe',
-                alertId: alert.id,
-                resident: { name: alert.residentName, id: alert.residentId },
-              })}
-            >
-              <Text style={[styles.buttonText, styles.safeText]}>Mark Safe</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.buttonNotSafe, alert.guardianStatus === 'Not Safe' && styles.buttonDisabled]}
-              disabled={alert.guardianStatus === 'Not Safe'}
-              onPress={() => navigation.navigate('ConfirmationScreen', {
-                status: 'Not Safe',
-                alertId: alert.id,
-                resident: { name: alert.residentName, id: alert.residentId },
-              })}
-            >
-              <Text style={[styles.buttonText, styles.notSafeText]}>Mark Not Safe</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {alert.status === 'escalated' && <View style={styles.escalationCard}><FontAwesome5 name="exclamation-triangle" size={20} color="#a83232" /><View style={{ flex: 1, marginLeft: 10 }}><Text style={styles.escalationTitle}>Alert Escalated</Text><Text style={styles.small}>{alert.escalationReason || 'Further response is required.'}</Text></View></View>}
-        {alert.status === 'closed' && <View style={styles.closedCard}><FontAwesome5 name="check-circle" size={20} color="#288928" /><Text style={styles.closedText}>{alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}</Text></View>}
+        {alert.status === 'escalated' && <View style={styles.escalationCard}>
+          <FontAwesome5 name="exclamation-triangle" size={20} color="#a83232" />
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.escalationTitle}>Alert Escalated</Text>
+            <Text style={styles.small}>{alert.escalationReason || 'Further response is required.'}</Text>
+          </View></View>}
+        
+        {alert.status === 'closed' && <View style={styles.closedCard}>
+          <FontAwesome5 name="check-circle" size={20} color="#288928" />
+          <Text style={styles.closedText}>{alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}</Text>
+        </View>}
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -202,7 +173,7 @@ const styles = StyleSheet.create({
   notSafe: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
 
   actionNotice: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff8f8', borderWidth: 1, borderColor: '#e7c1c1', borderRadius: 10, padding: 11, marginBottom: 8 },
-  actionNoticeText: { flex: 1, marginLeft: 9, fontSize: typography.caption, lineHeight: Math.ceil(typography.caption * 1.5), fontFamily: 'Poppins_400Regular', color: '#555' },
+  actionNoticeText: { flex: 1, marginLeft: 9, fontSize: typography.caption, lineHeight: Math.ceil(typography.caption * 1.5), fontFamily: 'Poppins_400Regular', color: '#555', marginLeft: 12 },
   escalationCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#fff5f5', borderRadius: 12, padding: 13, marginTop: 15 }, 
   escalationTitle: { fontSize: typography.detail, color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
   discrepancyCard: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#e3b1b1', backgroundColor: '#fff1f1', borderRadius: 12, padding: 12, marginBottom: 8 }, 

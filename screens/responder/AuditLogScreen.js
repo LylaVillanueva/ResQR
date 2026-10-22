@@ -1,19 +1,22 @@
 import { typography, spacing } from '../../theme';
 import React, { useMemo, useState } from 'react';
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import Text from "../../component/AppText";
 import TextInput from "../../component/AppTextInput";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/ResponderTabButtons";
 import { useAppData } from "../../lib/AppDataContext";
+import { typeStyles } from "../../lib/auditTypes";
+import { Dropdown } from 'react-native-element-dropdown';
 
 const filters = [
-  { key: 'all', label: 'All' },
-  { key: 'alert', label: 'Alert Log' },
-  { key: 'assignment', label: 'Assign Log' },
-  { key: 'escalation', label: 'Escalation Log' },
-  { key: 'incident', label: 'Incident Log' },
+  { label: 'All Activity', value: 'all' },
+  { label: 'Alert Confirmation', value: 'alert' },
+  { label: 'Alert Closed', value: 'alertClosed' },
+  { label: 'Alert Escalated', value: 'alertEscalated' },
+  { label: 'Assignment', value: 'assignment' },
+  { label: 'Incident', value: 'incident' },
 ];
 
 export default function AuditLogScreen({ navigation }) {
@@ -31,65 +34,115 @@ export default function AuditLogScreen({ navigation }) {
 
     const categoryMatch =
       activeFilter === 'all'
-      || (activeFilter === 'assignment' && entry.category === 'assignment')
-      || (activeFilter === 'incident' && entry.category === 'incident')
-      || (activeFilter === 'escalation' && entry.category === 'alertEscalated')
+      || entry.category === activeFilter
       || (activeFilter === 'alert' && ['alert', 'alertClosed', 'alertEscalated'].includes(entry.category));
 
     const query = searchQuery.trim().toLowerCase();
     const text = [entry.title, entry.subject, entry.detail, entry.actor].join(' ').toLowerCase();
 
     return categoryMatch && (!query || text.includes(query));
-  }), [auditLogs, activeFilter, searchQuery]);
+  }), [auditLogs, account.id, activeFilter, searchQuery]);
+
+  const groupedLogs = useMemo(() => {
+    const groups = {};
+    responderLogs.forEach((log) => {
+      const date = log.date || (log.time ? log.time.split(' ')[0] : 'Unknown Date');
+      if (!groups[date]) groups[date] = [];
+      groups[date].push(log);
+    });
+    return groups;
+  }, [responderLogs]);
+
+  const openLog = (log) => {
+    const meta = `${log.date} • ${log.time}\n\nPerformed by: ${log.actor}\n${log.actorRole}\n\nAffected record: ${log.subject}\n\n${log.detail}`;
+    Alert.alert(log.title, meta);
+  };
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          <View style={{ flex: 1 }}>
+          <View style={styles.headerTextWrap}>
             <Text style={styles.heading}>Activity Log</Text>
-            <Text style={styles.subheading}>View alert log & responder activities</Text>
+            <Text style={styles.subheading}>View alert log & user activities</Text>
           </View>
-          <TouchableOpacity style={styles.auditButton} onPress={() => navigation.canGoBack() ? navigation.goBack() : navigation.navigate('AlertScreen')} accessibilityRole="button" accessibilityLabel="Close activity log">
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate('Home')}
+            accessibilityRole="button"
+            accessibilityLabel="Close activity log"
+            activeOpacity={0.75}
+          >
             <FontAwesome5 name="times" size={24} color="#a83232" />
           </TouchableOpacity>
         </View>
-
         <View style={styles.divider} />
+
         <View style={styles.searchBar}>
           <FontAwesome5 name="search" size={18} color="#a83232" />
-          <TextInput style={styles.searchInput} placeholder="Search by alert or activity type" placeholderTextColor="#999" value={searchQuery} onChangeText={setSearchQuery} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search by alert or activity type"
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
         </View>
 
-        <View style={styles.filterBar}>
+        <View style={styles.filterRow}>
           <Text style={styles.filterLabel}>Filter by:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterWrap}>
-            {filters.map((filter) => (
-              <TouchableOpacity key={filter.key} style={[styles.filterButton, activeFilter === filter.key && styles.filterButtonActive]} onPress={() => setActiveFilter(filter.key)}>
-                <Text style={[styles.filterLabel, activeFilter === filter.key && styles.filterLabelActive]}>{filter.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+          <Dropdown
+            style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
+            data={filters} labelField="label" valueField="value" value={activeFilter}
+            onChange={(item) => setActiveFilter(item.value)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
+          />
         </View>
         <View style={styles.divider} />
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
-        {responderLogs.length === 0 ? (
-          <Text style={styles.emptyText}>No log entries match this filter.</Text>
-        ) : responderLogs.map((entry) => (
-          <View key={entry.id} style={styles.scanCard}>
-            <View style={styles.scanCardTextWrap}>
-              <Text style={[styles.scanCardTitle, entry.category === 'alertClosed' ? styles.statusClosed : entry.category === 'alertEscalated' ? styles.statusEscalated : styles.statusAccount]}>
-                {entry.category === 'assignment' ? 'Responder Assigned' : entry.title}
-              </Text>
-              <Text style={styles.scanCardTime}>{entry.time}</Text>
-            </View>
-            <Text style={styles.heading1}>{entry.subject}</Text>
-            <Text style={styles.scanCardSubtitle}>{entry.detail}</Text>
-            <Text style={styles.actorText}>{entry.actor} • {entry.actorRole}</Text>
+        {Object.keys(groupedLogs).length === 0 ? (
+          <View style={styles.emptyWrap}>
+            <FontAwesome5 name="clipboard-list" size={38} color="#bbb" />
+            <Text style={styles.emptyTitle}>No activity found</Text>
+            <Text style={styles.emptyText}>Try another search or filter.</Text>
           </View>
-        ))}
+        ) : (
+          Object.entries(groupedLogs).map(([date, dateLogs]) => (
+            <View key={date} style={styles.dateGroup}>
+              <Text style={styles.dateHeading}>{date}</Text>
+              {dateLogs.map((log) => {
+                const type = typeStyles[log.category] || typeStyles.system;
+                return (
+                  <TouchableOpacity key={log.id} style={styles.logCard} onPress={() => openLog(log)} activeOpacity={0.82}>
+                    <View style={styles.cardTopRow}>
+                      <View style={[styles.categoryBadge, { backgroundColor: type.background }]}>
+                        <FontAwesome5 name={type.icon} size={13} color={type.color} style={styles.badgeIcon} />
+                        <Text style={[styles.categoryText, { color: type.color }]}>
+                          {type.label}
+                        </Text>
+                      </View>
+                      <Text style={styles.timeText}>{log.time}</Text>
+                    </View>
+
+                    <Text style={styles.logTitle}>{log.title}</Text>
+                    <Text style={styles.subjectText}>{log.subject}</Text>
+                    <Text style={styles.detailText}>{log.detail}</Text>
+
+                    <View style={styles.actorRow}>
+                      <FontAwesome5 name="user" size={11} color="#888" />
+                      <Text style={styles.actorText}>
+                        {log.actor} • {log.actorRole}
+                      </Text>
+                      <FontAwesome5 name="chevron-right" size={12} color="#888" style={styles.chevron}/>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ))
+        )}
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -98,31 +151,41 @@ export default function AuditLogScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { padding: spacing.screen, paddingBottom: 0 },
+  content: { padding: spacing.screen, paddingBottom: 0, marginTop: -16 },
   scrollView: { flex: 1 },
-  scrollContent: { padding: spacing.screen, paddingTop: 0, marginTop: 20, paddingBottom: 20 },
-  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 4 },
-  heading1: { fontSize: typography.section, fontFamily: 'Poppins_600SemiBold', marginLeft: 8, marginTop: spacing.section , marginBottom: 12 },
-  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 20 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
-  auditButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  scrollContent: { padding: spacing.screen, paddingTop: 0, marginTop: 20 },
+  buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
+  headerTextWrap: { flex: 1, paddingRight: 10 },
+  heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4, marginBottom: -6 },
+  subheading: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', color: '#666', marginBottom: 10 },
+  backButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10 , minHeight: spacing.control },
-  searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333' , minHeight: spacing.control, backgroundColor: '#f2f2f2' },
-  filterBar: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: -10, marginBottom: 6 },
-  filterWrap: { alignItems: 'center', paddingRight: 4, marginLeft: 8 },
-  filterButton: { backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 5, marginHorizontal: 2, borderRadius: 8, borderWidth: 1, borderColor: '#ddd' },
-  filterButtonActive: { backgroundColor: '#ffdcdc', borderColor: '#a83232' },
-  filterLabel: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#666', marginLeft: 2 },
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_700Bold' },
-  scanCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 16, marginBottom: 10, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
-  scanCardTextWrap: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  scanCardTitle: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 12, fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' },
-  statusAccount: { color: '#245490', backgroundColor: '#d3e5f8' },
-  statusClosed: { color: '#288928', backgroundColor: '#a1fbaa' },
-  statusEscalated: { color: '#a83232', backgroundColor: '#fbd1d1' },
-  scanCardTime: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', paddingVertical: 4, color: '#666' },
-  scanCardSubtitle: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', marginLeft: 8, marginTop: 2 },
-  actorText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888', marginLeft: 8, marginTop: 10 },
-  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#777', textAlign: 'center', marginTop: 60 },
+
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 20, paddingVertical: 0, marginBottom: 16, marginTop: 10, minHeight: spacing.control },
+  searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333', minHeight: spacing.control, backgroundColor: '#f2f2f2' },
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: -4, marginBottom: 12, gap: 10 },
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
+  filterText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+
+  dateGroup: { marginBottom: 4 },
+  dateHeading: { fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold', color: '#555', marginBottom: 9, marginLeft: 2 },
+  logCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#ddd', borderRadius: 16, padding: 15, marginBottom: 13, shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  cardTopRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap', gap: 8 },
+  categoryBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 11, paddingVertical: 6, paddingHorizontal: 12, maxWidth: '78%' },
+  badgeIcon: { marginRight: 7 },
+  categoryText: { fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' },
+  timeText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#666' },
+  logTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', color: '#111', marginBottom: 1 },
+  subjectText: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#222', marginBottom: 3 },
+  detailText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#333', lineHeight: Math.ceil(typography.caption * 1.5) },
+  actorRow: { flexDirection: 'row', alignItems: 'center', marginTop: 11, paddingTop: 9, borderTopWidth: 1, borderTopColor: '#eee' },
+  actorText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888', marginLeft: 6, flex: 1 },
+  chevron: { marginLeft: 8 },
+
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
 });

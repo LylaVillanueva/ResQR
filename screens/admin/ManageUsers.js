@@ -57,13 +57,13 @@ export default function ManageUsers({ navigation }) {
         <View style={styles.filterRow}>
           <Dropdown
             style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
-            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_400Regular"
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
             data={ROLE_FILTERS} labelField="label" valueField="value" value={roleFilter} 
             onChange={(item) => setRoleFilter(item.value)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
           />
           <Dropdown
             style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
-            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_400Regular"
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
             data={STATUS_FILTERS} labelField="label" valueField="value" value={statusFilter}
             onChange={(item) => setStatusFilter(item.value)} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
           />
@@ -93,7 +93,7 @@ export default function ManageUsers({ navigation }) {
             </TouchableOpacity>
           );
         })}
-        {filteredUsers.length === 0 && <View style={styles.emptyState}><FontAwesome5 name="user-slash" size={28} color="#aaa" /><Text style={styles.emptyTitle}>No users found</Text><Text style={styles.emptyText}>Try another name, mobile number, role, or status.</Text></View>}
+        {filteredUsers.length === 0 && <View style={styles.emptyWrap}><FontAwesome5 name="user-slash" size={38} color="#bbb" /><Text style={styles.emptyTitle}>No users found</Text><Text style={styles.emptyText}>Try another name, mobile number, role, or status.</Text></View>}
       </ScrollView>
 
       <View style={styles.buttonContent}>
@@ -122,7 +122,8 @@ const styles = StyleSheet.create({
   searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f2f2f2', borderWidth: 1, borderColor: '#ccc', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 0, marginTop: 14 , minHeight: spacing.control }, 
   searchInput: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', marginLeft: 8, color: '#333' , minHeight: spacing.control, backgroundColor: '#f2f2f2' }, 
   filterRow: { flexDirection: 'row', gap: 8, marginTop: 10 }, 
-  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingVertical: 8, paddingHorizontal: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff' , minHeight: 44 }, 
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
   filterText: { fontSize: typography.caption, fontFamily: 'Poppins_500Medium', color: '#666', flexShrink: 1 }, 
   
   userCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 10, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
@@ -131,17 +132,17 @@ const styles = StyleSheet.create({
   role: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginTop: 1 }, 
   phone: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#888', marginTop: 1 }, 
   wardText: { fontSize: typography.caption, fontFamily: 'Poppins_400Regular', color: '#555', marginTop: 2, paddingRight: 4 }, 
-  rightCol: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }, 
   
+  rightCol: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 10 }, 
   statusPill: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3 }, 
   active: { backgroundColor: '#a1fbaa' }, 
   inactive: { backgroundColor: '#eee' }, 
   statusText: { fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' }, 
   activeText: { color: '#288928' }, inactiveText: { color: '#666' }, 
   
-  emptyState: { alignItems: 'center', padding: 45 }, 
-  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 10 }, 
-  emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', textAlign: 'center', marginTop: 4 }, 
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
 
   addButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 10, backgroundColor: '#ffdcdc', paddingVertical: 14, alignItems: 'center', marginBottom: 8 },
   addButtonText: { color: '#a83232', fontSize: typography.detail, fontFamily: 'Poppins_500Medium' },

@@ -147,8 +147,17 @@ export default function AlertDetails({ route, navigation }) {
           </View>
         </>}
 
-        {alert.status === 'escalated' && <View style={styles.escalationCard}><FontAwesome5 name="exclamation-triangle" size={20} color="#a83232" /><View style={{ flex: 1, marginLeft: 10 }}><Text style={styles.escalationTitle}>Alert Escalated</Text><Text style={styles.small}>{alert.escalationReason || 'Further response is required.'}</Text></View></View>}
-        {alert.status === 'closed' && <View style={styles.closedCard}><FontAwesome5 name="check-circle" size={20} color="#288928" /><Text style={styles.closedText}>{alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}</Text></View>}
+        {alert.status === 'escalated' && <View style={styles.escalationCard}>
+          <FontAwesome5 name="exclamation-triangle" size={20} color="#a83232" />
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={styles.escalationTitle}>Alert Escalated</Text>
+            <Text style={styles.small}>{alert.escalationReason || 'Further response is required.'}</Text>
+          </View></View>}
+        
+        {alert.status === 'closed' && <View style={styles.closedCard}>
+          <FontAwesome5 name="check-circle" size={20} color="#288928" />
+          <Text style={styles.closedText}>{alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}</Text>
+        </View>}
       </ScrollView>
       <TabBar />
     </SafeAreaView>

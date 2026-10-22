@@ -8,15 +8,16 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
 import { useAppData } from "../../lib/AppDataContext";
+import { Dropdown } from 'react-native-element-dropdown';
 
 const filters = [
-  { key: 'all', label: 'All' },
-  { key: 'active', label: 'Active' },
-  { key: 'open', label: 'Open' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'escalated', label: 'Escalated' },
-  { key: 'closed', label: 'Closed' },
-  { key: 'unassigned', label: 'Unassigned' },
+  { key: 'all', label: 'All Alerts' },
+  { key: 'active', label: 'Active Alert' },
+  { key: 'open', label: 'Open Alert' },
+  { key: 'pending', label: 'Pending Confirmation' },
+  { key: 'escalated', label: 'Escalated Alert' },
+  { key: 'closed', label: 'Closed Alert' },
+  { key: 'unassigned', label: 'Waiting for Assignment' },
 ];
 
 function getSubtitle(alert) {
@@ -52,15 +53,14 @@ export default function AlertScreen({ route, navigation }) {
         </View>
         <Text style={styles.subheading}>{requestedFilter === 'unassigned' ? 'Alerts waiting for responder assignment' : 'Monitor emergency alert status'}</Text>
         
-        <View style={styles.filterScrollWrap}>
-          <Text style={[styles.filterLabel, {marginRight: 10}]}>Filter by:</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterWrap}>
-            {filters.map((f) => (
-              <TouchableOpacity key={f.key} style={[styles.filterButton, requestedFilter === f.key && styles.filterActive]} onPress={() => navigation.setParams({ filter: f.key })}>
-                <Text style={[styles.filterLabel, requestedFilter === f.key && styles.filterLabelActive]}>{f.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+        <View style={styles.filterRow}>
+          <Text style={styles.filterLabel}>Filter by:</Text>
+          <Dropdown
+            style={styles.filterSelect} containerStyle={styles.filterMenu} placeholderStyle={styles.filterText}
+            selectedTextStyle={styles.filterText} itemTextStyle={styles.filterText} fontFamily="Poppins_500Medium"
+            data={filters} labelField="label" valueField="key" value={requestedFilter}
+            onChange={(item) => navigation.setParams({ filter: item.key })} iconColor="#666" activeColor="#ffdcdc" dropdownPosition="auto"
+          />
         </View>
         <View style={styles.divider} />
       </View>
@@ -106,7 +106,7 @@ export default function AlertScreen({ route, navigation }) {
             )}
           </View>
         ))}
-        {visibleAlerts.length === 0 && <View style={styles.empty}><FontAwesome5 name="bell-slash" size={28} color="#aaa" /><Text style={styles.emptyTitle}>No alerts found</Text><Text style={styles.emptyText}>There are no alerts matching this filter.</Text></View>}
+        {visibleAlerts.length === 0 && <View style={styles.emptyWrap}><FontAwesome5 name="bell-slash" size={38} color="#bbb" /><Text style={styles.emptyTitle}>No alerts found</Text><Text style={styles.emptyText}>There are no alerts matching this filter.</Text></View>}
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -125,15 +125,14 @@ const styles = StyleSheet.create({
 
   auditButton: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ffdcdc', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4, minHeight: 40 },
   auditText: { color: '#a83232', fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold', marginLeft: 5 },
-  filterScrollWrap: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, marginTop: 8, marginBottom: -4 },
-  filterWrap: { paddingRight: 10 }, 
-  filterButton: { borderWidth: 1, borderColor: '#ddd', borderRadius: 9, paddingHorizontal: 10, paddingVertical: 6, marginRight: 6, backgroundColor: '#fff' }, 
-  filterActive: { borderColor: '#a83232', backgroundColor: '#ffdcdc' }, 
-  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' }, 
-  filterLabelActive: { color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
+  filterRow: { flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 2, gap: 10 },
+  filterSelect: { flex: 1, borderWidth: 1, borderColor: '#ddd', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 4, backgroundColor: '#fff', minHeight: 42 },
+  filterMenu: { borderRadius: 10, borderColor: '#ddd', backgroundColor: '#fff' },
+  filterText: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
+  filterLabel: { fontSize: typography.caption, color: '#666', fontFamily: 'Poppins_500Medium' },
 
   alertCard: { flexDirection: 'column', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: spacing.card, marginBottom: 16, backgroundColor: '#fff', shadowColor: '#aaa', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 , ...alertLayout.card },
-  escalatedCard: { borderColor: '#a83232' },
+  escalatedCard: { borderColor: '#a83232', shadowColor: '#a83232', shadowOffset: { width: 2, height: 4 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 3 },
   alertCardTextWrap: { flexWrap: 'wrap', gap: 6, alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 , ...alertLayout.headerRow },
   statusPill: { borderRadius: 10, paddingVertical: 4, paddingHorizontal: 16, fontSize: typography.detail, fontFamily: 'Poppins_600SemiBold' },
   status_open: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
@@ -155,7 +154,7 @@ const styles = StyleSheet.create({
   detailsButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', borderRadius: 10, borderWidth: 1, borderColor: '#245490', paddingVertical: 10, paddingHorizontal: 18, backgroundColor: '#d3e5f8', minHeight: 48, ...alertLayout.details },
   detailsText: { fontSize: typography.detail, fontFamily: 'Poppins_500Medium', color: '#245490' },
   
-  empty: { alignItems: 'center', padding: 50 }, 
-  emptyTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 8 }, 
-  emptyText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginTop: 3 },
+  emptyWrap: { alignItems: 'center', paddingVertical: 65 },
+  emptyTitle: { fontSize: typography.section, fontFamily: 'Poppins_700Bold', color: '#555', marginTop: 14 },
+  emptyText: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', textAlign: 'center', marginTop: 8, lineHeight: Math.ceil(typography.detail * 1.5) },
 });
