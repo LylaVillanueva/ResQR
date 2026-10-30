@@ -90,7 +90,7 @@ export default function HomeScreen({ navigation }) {
         {attentionAlerts.length === 0 ? (
           <View style={styles.emptyCard}>
             <FontAwesome5 name="check-circle" size={24} color="#288928" />
-            <Text style={styles.emptyTitle}>No active alerts</Text>
+            <Text style={styles.emptyTitle}>No need attention</Text>
             <Text style={styles.emptyText}>All current alerts have been closed.</Text>
           </View>
         ) : attentionAlerts.map((alert) => (
@@ -112,6 +112,9 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.navigate('AuditLogScreen')}><Text style={styles.viewAll}>View All ›</Text></TouchableOpacity>
         </View>
 
+        {recentActivity.length === 0 ? (
+          <Text style={styles.emptyListText}>No recent activity yet.</Text>
+        ) : (
         <View style={[styles.headCard, styles.shadow]}>
           {recentActivity.map((item, index) => {
             const type = typeStyles[item.category] || typeStyles.system;
@@ -133,6 +136,7 @@ export default function HomeScreen({ navigation }) {
             );
           })}
         </View>
+        )}
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -140,6 +144,7 @@ export default function HomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  emptyListText: { fontSize: typography.body, color: '#888', fontFamily: 'Poppins_400Regular', marginBottom: 10, textAlign: 'center' },
   container: { flex: 1, backgroundColor: '#fff' }, 
   content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 }, 
   scrollView: { flex: 1 }, scrollContent: { padding: spacing.screen, paddingTop: 0 },

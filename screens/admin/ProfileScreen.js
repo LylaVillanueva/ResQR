@@ -11,6 +11,7 @@ import TextInput from "../../component/AppTextInput";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppData } from "../../lib/AppDataContext";
 import TabBar from "../../component/TabButtons";
+import IssueCardModal from "../../component/IssueCardModal";
 import { Section, InfoRow, StatusBadge, BackLink } from "../../component/ui";
 import { colors, font, radius, shadow } from '../../theme';
 
@@ -19,6 +20,7 @@ const relationships = ['Parent', 'Grandparent', 'Child', 'Grandchild', 'Sibling'
 export default function ProfileScreen({ route, navigation }) {
   const { resident, setResident, alerts, loading, error, refresh } = useResidentProfile(route);
   const [showQR, setShowQR] = useState(false);
+  const [showIssue, setShowIssue] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(resident);
   const residentAlerts = alerts;
@@ -97,7 +99,7 @@ export default function ProfileScreen({ route, navigation }) {
         </View>
         <View style={styles.actionRow}>
           <TouchableOpacity style={styles.editButton} onPress={() => { setDraft(resident); setEditing(true); }}><Text style={styles.editButtonText}>Edit Information</Text></TouchableOpacity>
-          <TouchableOpacity style={styles.qrButton} disabled={qrLoading} onPress={() => qrData ? setShowQR(true) : Alert.alert('Issue QR card?', 'Issuing a new QR card replaces any previously issued card for this resident.', [{ text: 'Cancel', style: 'cancel' }, { text: 'Issue Card', onPress: viewQR }])}><Text style={styles.qrButtonText}>Issue QR Card</Text></TouchableOpacity>
+          <TouchableOpacity style={styles.qrButton} disabled={qrLoading} onPress={() => qrData ? setShowQR(true) : setShowIssue(true)}><Text style={styles.qrButtonText}>Issue QR Card</Text></TouchableOpacity>
         </View>
         <View style={styles.divider} />
       </View>
@@ -134,6 +136,12 @@ export default function ProfileScreen({ route, navigation }) {
             </View>
           ) : <Empty text="No alert history available." />}</Section>
       </ScrollView>
+      <IssueCardModal
+        visible={showIssue}
+        submitting={qrLoading}
+        onCancel={() => setShowIssue(false)}
+        onConfirm={async () => { setShowIssue(false); await viewQR(); }}
+      />
       <TabBar />
     </SafeAreaView>
   );

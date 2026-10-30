@@ -6,6 +6,7 @@ import TextInput from "../../component/AppTextInput";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
+import IncidentLogModal from "../../component/IncidentLogModal";
 import { useAppData } from "../../lib/AppDataContext";
 import { typeStyles } from "../../lib/auditTypes";
 import { Dropdown } from 'react-native-element-dropdown';
@@ -26,6 +27,7 @@ export default function AuditLogScreen({ navigation }) {
   const { auditLogs = [], account } = useAppData();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [selectedLog, setSelectedLog] = useState(null);
 
   const logs = auditLogs;
 
@@ -50,11 +52,6 @@ export default function AuditLogScreen({ navigation }) {
       return groups;
     }, {});
   }, [filteredLogs]);
-
-  const openLog = (log) => {
-    const meta = `${log.date} • ${log.time}\n\nPerformed by: ${log.actor}\n${log.actorRole}\n\nAffected record: ${log.subject}\n\n${log.detail}`;
-    Alert.alert(log.title, meta);
-  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -113,7 +110,7 @@ export default function AuditLogScreen({ navigation }) {
               {dateLogs.map((log) => {
                 const type = typeStyles[log.category] || typeStyles.system;
                 return (
-                  <TouchableOpacity key={log.id} style={styles.logCard} onPress={() => openLog(log)} activeOpacity={0.82}>
+                  <TouchableOpacity key={log.id} style={styles.logCard} onPress={() => setSelectedLog(log)} activeOpacity={0.82}>
                     <View style={styles.cardTopRow}>
                       <View style={[styles.categoryBadge, { backgroundColor: type.background }]}>
                         <FontAwesome5 name={type.icon} size={13} color={type.color} style={styles.badgeIcon} />
@@ -148,6 +145,7 @@ export default function AuditLogScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
+      <IncidentLogModal visible={!!selectedLog} log={selectedLog} onClose={() => setSelectedLog(null)} />
       <TabBar />
     </SafeAreaView>
   );

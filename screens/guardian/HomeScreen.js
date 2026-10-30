@@ -176,6 +176,9 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity onPress={() => navigation.navigate('AuditLogScreen')}><Text style={styles.viewAll}>View All ›</Text></TouchableOpacity>
         </View>
 
+        {recentActivity.length === 0 ? (
+          <Text style={styles.emptyListText}>No recent activity yet.</Text>
+        ) : (
         <View style={[styles.headCard, styles.shadow]}>
           {recentActivity.map((item, index) => {
             const type = typeStyles[item.category] || typeStyles.system;
@@ -197,6 +200,7 @@ export default function HomeScreen({ navigation }) {
             );
           })}
         </View>
+        )}
       </ScrollView>
       <TabBar />
     </SafeAreaView>
@@ -211,6 +215,7 @@ function statusStyle(status) {
 }
 
 const styles = StyleSheet.create({
+  emptyCard: { alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 22 },
   container: { flex: 1, backgroundColor: '#fff' }, 
   content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 }, 
   scrollView: { flex: 1 }, scrollContent: { padding: spacing.screen, paddingTop: 0 },

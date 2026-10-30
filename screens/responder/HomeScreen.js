@@ -204,6 +204,7 @@ function statusColor(status) {
 }
 
 const styles = StyleSheet.create({
+  emptyCard: { alignItems: 'center', borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 22 },
   container: { flex: 1, backgroundColor: '#fff' }, 
   content: { padding: spacing.screen, paddingTop: 8, paddingBottom: 0 }, 
   scrollView: { flex: 1 }, scrollContent: { padding: spacing.screen, paddingTop: 0 },

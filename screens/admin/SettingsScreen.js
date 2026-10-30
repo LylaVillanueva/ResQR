@@ -1,11 +1,12 @@
 import { typography, spacing } from '../../theme';
 import { useAppData } from "../../lib/AppDataContext";
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import Text from "../../component/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import TabBar from "../../component/TabButtons";
+import InfoModal from "../../component/InfoModal";
 import useNotificationPrefs from "../../lib/useNotificationPrefs";
 import { Section, Divider, ToggleRow, LinkRow, InfoRow } from "../../component/ui";
 import { colors, font, radius } from '../../theme';
@@ -16,7 +17,8 @@ export default function SettingsScreen({ navigation, setSession }) {
   const { prefs, set, setPushEnabled } = useNotificationPrefs();
   const { fontScaleKey, fontFamilyKey, languageKey, t } = useAccessibilitySettings();
 
-  const info = (title, message) => Alert.alert(title, message);
+  const [infoModal, setInfoModal] = useState(null); // { title, message }
+  const info = (title, message) => setInfoModal({ title, message });
 
   return (
     <SafeAreaView style={styles.container}>
@@ -95,6 +97,7 @@ export default function SettingsScreen({ navigation, setSession }) {
           <Text style={styles.logoutText}>{t('logOut')}</Text>
         </TouchableOpacity>
       </ScrollView>
+      <InfoModal visible={!!infoModal} title={infoModal?.title} message={infoModal?.message} onClose={() => setInfoModal(null)} />
       <TabBar />
     </SafeAreaView>
   );
