@@ -29,8 +29,8 @@ export default function IncidentLogModal({ visible, log, onClose }) {
 }
 
 const styles = StyleSheet.create({
-  block: { marginTop: 12 },
+  block: { marginTop: 10 },
   label: { fontSize: typography.caption, fontFamily: font.medium, color: colors.textMuted },
-  value: { fontSize: typography.body, fontFamily: font.regular, color: colors.textPrimary },
+  value: { fontSize: typography.detail, fontFamily: font.regular, color: colors.textPrimary },
   muted: { fontSize: typography.detail, fontFamily: font.regular, color: colors.textMuted },
 });

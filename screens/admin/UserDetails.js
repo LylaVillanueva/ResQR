@@ -190,34 +190,38 @@ function EditView({ draft, setDraft, onSave, onCancel, saving }) {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.back} onPress={onCancel}>‹ Back</Text>
-        <Text style={styles.heading}>Edit User</Text>
+        <Text style={styles.editHeading}>EDIT USER</Text>
+        <Text style={styles.subheading}>step 1 : Personal Information</Text>
+        
+        <View style={styles.progressRow}>
+          <View style={[styles.progressBar, styles.progressBarActive]} />
+        </View>
       </View>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.label}>Full Name</Text>
-        <TextInput style={styles.input} value={draft.name} onChangeText={(v) => setDraft((p) => ({ ...p, name: v }))} placeholder="Full name" />
 
-        <Text style={styles.label}>Mobile Number</Text>
-        <View style={styles.phoneRow}>
-          <View style={styles.countryCode}><Text style={styles.countryCodeText}>+63</Text></View>
-          <TextInput
-            style={styles.phoneInput}
-            placeholder="9XX-XXX-XXXX"
-            keyboardType="number-pad"
-            maxLength={10}
-            value={localPhone(draft.phone)}
-            onChangeText={(v) => setDraft((p) => ({ ...p, phone: `+63${v.replace(/[^0-9]/g, '')}` }))}
-          />
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.editScroll}>
+        <Field label="Full Name" required value={draft.name} onChangeText={(v) => setDraft((p) => ({ ...p, name: v }))} placeholder="Full name" />
+
+        <View style={styles.fieldWrap}>
+          <Text style={styles.fieldLabel}>Mobile Number</Text>
+          <View style={styles.phoneRow}>
+            <View style={styles.countryCode}><Text style={styles.countryCodeText}>+63</Text></View>
+            <TextInput
+              style={styles.phoneInput}
+              placeholder="9XX-XXX-XXXX"
+              keyboardType="number-pad"
+              maxLength={10}
+              value={localPhone(draft.phone)}
+              onChangeText={(v) => setDraft((p) => ({ ...p, phone: `+63${v.replace(/[^0-9]/g, '')}` }))}
+            />
+          </View>
         </View>
 
-        <Text style={styles.label}>Email</Text>
-        <TextInput style={styles.input} value={draft.email} onChangeText={(v) => setDraft((p) => ({ ...p, email: v }))} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" />
-
-        <Text style={styles.label}>Home Address</Text>
-        <TextInput style={styles.input} value={draft.address} onChangeText={(v) => setDraft((p) => ({ ...p, address: v }))} placeholder="House no., street, purok/subdivision" />
+        <Field label="Email" value={draft.email} onChangeText={(v) => setDraft((p) => ({ ...p, email: v }))} placeholder="name@example.com" keyboardType="email-address" autoCapitalize="none" />
+        <Field label="Home Address" value={draft.address} onChangeText={(v) => setDraft((p) => ({ ...p, address: v }))} placeholder="House no., street, purok/subdivision" />
 
         {draft.role === 'Barangay Official' && (
-          <>
-            <Text style={styles.label}>Position</Text>
+          <View style={styles.fieldWrap}>
+            <Text style={styles.fieldLabel}>Position</Text>
             <Dropdown
               style={styles.pickerWrap}
               placeholderStyle={styles.dropdownPlaceholder}
@@ -232,17 +236,34 @@ function EditView({ draft, setDraft, onSave, onCancel, saving }) {
               onChange={(item) => setDraft((p) => ({ ...p, position: item.value }))}
               iconColor="#666"
             />
-          </>
+          </View>
         )}
-
-        <TouchableOpacity style={styles.primaryButton} onPress={onSave} disabled={saving}>
-          <Text style={styles.primaryText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.secondaryButton} onPress={onCancel} disabled={saving}>
-          <Text style={styles.secondaryText}>Cancel</Text>
-        </TouchableOpacity>
       </ScrollView>
+
+      <View style={styles.bottomBar}>
+        <TouchableOpacity style={[styles.button, styles.shadow]} onPress={onSave} disabled={saving}>
+          <Text style={styles.buttonText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.cancelBtnFull} onPress={onCancel} disabled={saving}>
+          <Text style={styles.cancelTextFull}>Cancel</Text>
+        </TouchableOpacity>
+        <Text style={styles.pageLabel}>page 1</Text>
+      </View>
     </SafeAreaView>
+  );
+}
+
+function Field({ label, value, onChangeText, placeholder, keyboardType, autoCapitalize, required }) {
+  return (
+    <View style={styles.fieldWrap}>
+      <Text style={styles.fieldLabel}>
+        {label}{required && <Text style={styles.required}>*</Text>}
+      </Text>
+      <TextInput
+        style={styles.input} value={value || ''} onChangeText={onChangeText}
+        placeholder={placeholder} placeholderTextColor="#999" keyboardType={keyboardType} autoCapitalize={autoCapitalize}
+      />
+    </View>
   );
 }
 
@@ -250,8 +271,16 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   content: { padding: spacing.screen, paddingBottom: 0, paddingTop: 4 },
   scrollContent: { padding: spacing.screen, paddingTop: 0, paddingBottom: 30 },
+  editScroll: { padding: spacing.screen, paddingTop: 0, paddingBottom: 20 },
   back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, marginTop: 0, minHeight: 44, paddingVertical: 4 },
   heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
+  editHeading: { fontSize: typography.title, fontFamily: 'Poppins_600SemiBold', marginBottom: 4 },
+  subheading: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 8 },
+  
+  progressRow: { flexDirection: 'row', marginBottom: 24 },
+  progressBar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: '#e0e0e0', marginRight: 6 },
+  progressBarActive: { backgroundColor: '#c12b2b' },
+
   residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16 },
   residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
   small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
@@ -266,9 +295,11 @@ const styles = StyleSheet.create({
   activeText: { color: '#288928' },
   inactiveText: { color: '#666' },
   statusText: { fontSize: typography.caption, fontFamily: 'Poppins_600SemiBold' },
+  
   section: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginTop: 15, marginBottom: 7 },
   sectionSmall: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold', marginBottom: 8 },
   infoCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 6, marginBottom: 18, backgroundColor: '#fff' },
+  
   actionButton: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#245490', borderRadius: 10, backgroundColor: '#d3e5f8', paddingVertical: 14, marginBottom: 8 },
   actionText: { color: '#245490', fontSize: typography.detail, fontFamily: 'Poppins_500Medium' },
   dangerButton: { borderColor: '#a83232', backgroundColor: '#ffdcdc' },
@@ -276,15 +307,26 @@ const styles = StyleSheet.create({
   plainButton: { borderColor: '#a83232', backgroundColor: '#fff' },
   roleCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 14, marginTop: 8 },
   warning: { fontSize: typography.caption, color: '#8a6d1d', backgroundColor: '#fbf1a1', borderRadius: 8, padding: 9, fontFamily: 'Poppins_400Regular', marginBottom: 10 },
+  
   fieldWrap: { marginBottom: spacing.field },
   fieldLabel: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#666', marginBottom: 10 },
+  required: { color: '#c12b2b' },
+  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#f2f2f2', fontFamily: 'Poppins_400Regular', fontSize: typography.body, minHeight: spacing.control, height: spacing.control },
+  
   pickerWrap: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#f2f2f2', justifyContent: 'center', height: spacing.control },
   dropdownPlaceholder: { fontFamily: 'Poppins_400Regular', fontSize: typography.body, color: '#999' },
   dropdownText: { fontFamily: 'Poppins_400Regular', fontSize: typography.body, color: '#333' },
-  label: { fontSize: typography.body, fontFamily: 'Poppins_500Medium', marginTop: 12, marginBottom: 10 },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 0, height: spacing.control, fontSize: typography.body, fontFamily: 'Poppins_400Regular', backgroundColor: '#f2f2f2' },
+  
   phoneRow: { flexDirection: 'row' },
   countryCode: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 14, justifyContent: 'center', marginRight: 8, height: spacing.control, backgroundColor: '#f2f2f2' },
   countryCodeText: { fontSize: typography.body, fontWeight: '600' },
-  phoneInput: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 0, height: spacing.control, backgroundColor: '#f2f2f2', fontSize: typography.body, fontFamily: 'Poppins_400Regular' },
+  phoneInput: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, paddingHorizontal: 12, backgroundColor: '#f2f2f2', fontSize: typography.body, fontFamily: 'Poppins_400Regular', height: spacing.control },
+
+  bottomBar: { paddingHorizontal: spacing.screen, paddingTop: 12, paddingBottom: 20, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#fff' },
+  shadow: { shadowColor: '#625350', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
+  button: { borderRadius: 10, backgroundColor: '#fbd1d1', paddingVertical: 16, alignItems: 'center', marginBottom: 8, minHeight: spacing.control, justifyContent: 'center' },
+  buttonText: { color: '#a83232', fontSize: typography.body, fontFamily: 'Poppins_500Medium' },
+  cancelBtnFull: { borderWidth: 1, borderColor: '#ddd', backgroundColor: '#fff', borderRadius: 10, paddingVertical: 16, alignItems: 'center', minHeight: spacing.control, justifyContent: 'center' },
+  cancelTextFull: { color: '#c12b2b', fontSize: typography.body, fontFamily: 'Poppins_400Regular' },
+  pageLabel: { textAlign: 'center', color: '#999', marginTop: 8, fontSize: typography.caption, fontFamily: 'Poppins_400Regular' },
 });

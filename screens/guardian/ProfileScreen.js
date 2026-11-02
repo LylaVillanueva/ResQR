@@ -15,15 +15,30 @@ import { Divider } from "../../component/ui";
 import { colors, font, radius, shadow } from '../../theme';
 
 export default function ProfileScreen({ route, navigation }) {
-  const { resident, setResident, alerts, loading, error } = useResidentProfile(route);
+  const { residents, alerts, loading: contextLoading } = useAppData();
+  const residentId = route.params?.residentId || route.params?.resident?.id;
+
+  const liveResident = useMemo(
+    () => residents.find((r) => r.id === residentId),
+    [residents, residentId]
+  );
+
+  const { alerts: hookAlerts, loading: alertLoading, error } = useResidentProfile({ 
+    params: { residentId, resident: liveResident } 
+  });
+
+  const currentAlerts = hookAlerts || alerts;
 
   const wardAlerts = useMemo(
-    () => resident ? alerts.filter((alert) => alert.residentId === resident.id) : [],
-    [alerts, resident]
+    () => liveResident ? currentAlerts.filter((alert) => alert.residentId === liveResident.id) : [],
+    [currentAlerts, liveResident]
   );
+  
   const activeAlert = wardAlerts.find((alert) => alert.status !== 'closed');
 
-  if (loading || error || !resident) return <ScreenState loading={loading} error={error} onBack={() => navigation.goBack()} />;
+  if (contextLoading || alertLoading || error || !liveResident) {
+    return <ScreenState loading={contextLoading || alertLoading} error={error || (!liveResident ? 'Resident not found' : null)} onBack={() => navigation.goBack()} />;
+  }
 
   const statusLabel = (status) => {
     if (status === 'escalated') return 'Escalated';
@@ -40,9 +55,10 @@ export default function ProfileScreen({ route, navigation }) {
         <View style={[styles.residentCard, styles.shadow]}>
           <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
           <View style={{ flex: 1, margin: 0 }}>
-            <Text style={styles.contextTitle}>{resident.name}</Text>
-            <Text style={styles.small}>Role: {resident.role}</Text>
-            <Text style={styles.small}>ID Number: {resident.id}</Text>
+            {/* Using liveResident ensures this updates immediately */}
+            <Text style={styles.contextTitle}>{liveResident.name}</Text>
+            <Text style={styles.small}>Role: {liveResident.type || 'Resident'}</Text>
+            <Text style={styles.small}>ID Number: {liveResident.id}</Text>
           </View>
         </View>
 
@@ -65,20 +81,20 @@ export default function ProfileScreen({ route, navigation }) {
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <Text style={styles.section}>Personal Information</Text>
         <View style={styles.card}>
-          <InfoRow label="Full Name" value={resident.name} />
+          <InfoRow label="Full Name" value={liveResident.name} />
           <Divider />
-          <InfoRow label="Date of Birth" value={resident.birthDate} />
+          <InfoRow label="Date of Birth" value={liveResident.birthDate} />
           <Divider />
-          <InfoRow label="Address" value={resident.address} />
+          <InfoRow label="Address" value={liveResident.address} />
         </View>
 
         <Text style={styles.section}>Guardian Information</Text>
         <View style={styles.card}>
-          <InfoRow label="Guardian Name" value={resident.guardianName} />
+          <InfoRow label="Guardian Name" value={liveResident.guardianName} />
           <Divider />
-          <InfoRow label="Relationship" value={resident.relationship} />
+          <InfoRow label="Relationship" value={liveResident.relationship} />
           <Divider />
-          <InfoRow label="Contact Number" value={resident.guardianContact} />
+          <InfoRow label="Contact Number" value={liveResident.guardianContact} />
         </View>
 
         <Text style={styles.section}>Scan & Alert History</Text>

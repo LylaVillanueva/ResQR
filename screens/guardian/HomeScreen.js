@@ -156,7 +156,7 @@ export default function HomeScreen({ navigation }) {
           <TouchableOpacity
             key={ward.id}
             style={styles.residentCard}
-            onPress={() => navigation.navigate('ProfileScreen', { resident: ward })}
+            onPress={() => navigation.navigate('ProfileScreen', { residentId: ward.id })}
             activeOpacity={0.8}
           >
             <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />

@@ -20,9 +20,6 @@ export default function ProfileScreen({ route, navigation }) {
     [alerts, resident]
   );
 
-
-
-
   if (loading || error || !resident) return <ScreenState loading={loading} error={error} onBack={() => navigation.goBack()} />;
   return (
     <SafeAreaView style={styles.container}>

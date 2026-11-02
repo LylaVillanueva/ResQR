@@ -114,7 +114,7 @@ function CheckboxRow({ checked, onPress, label }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scrollContent: { padding: spacing.screen, paddingBottom: 40 , paddingTop: 4 },
-  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#245490', marginBottom: 4, minHeight: 44, paddingVertical: 4, marginTop: 0 },
+  back: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#a83232', marginBottom: 4, minHeight: 44, paddingVertical: 4, marginTop: 0 },
   heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginBottom: 8 },
   subheading: { fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#888', marginBottom: 28 },
 
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#fff',
   },
-  checkboxChecked: { backgroundColor: '#245490', borderColor: '#245490' },
+  checkboxChecked: { backgroundColor: '#a83232', borderColor: '#a83232' },
   checkboxMark: { color: '#fff', fontSize: typography.body, fontWeight: '700' },
   rowLabel: { flex: 1, fontSize: typography.body, fontFamily: 'Poppins_400Regular', color: '#1a1a1a', lineHeight: Math.ceil(typography.body * 1.5), paddingTop: 4 },
 
@@ -142,13 +142,13 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
     backgroundColor: '#fff',
   },
-  button: {
-    backgroundColor: '#d3e5f8',
-    borderRadius: 10,
-    paddingVertical: 16,
-    alignItems: 'center',
-   minHeight: spacing.control, justifyContent: 'center' },
   buttonDisabled: { opacity: 0.5 },
-  buttonText: { color: '#245490', fontSize: typography.body, fontFamily: 'Poppins_500Medium' },
-  footnote: { textAlign: 'center', color: '#999', fontSize: typography.caption, fontFamily: 'Poppins_400Regular', marginTop: 10 },
+  button: {
+    backgroundColor: '#c12b2b',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+   minHeight: spacing.control },
+  buttonText: { color: '#fff', fontSize: typography.body, fontFamily: 'Poppins_500Medium', fontWeight: '600' },
+  footnote: { textAlign: 'center', color: '#999', fontSize: typography.caption, fontFamily: 'Poppins_400Regular', marginBottom: 10 },
 });

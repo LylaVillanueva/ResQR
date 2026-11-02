@@ -144,10 +144,17 @@ export default function AlertDetails({ route, navigation }) {
             <Text style={styles.small}>{alert.escalationReason || 'Further response is required.'}</Text>
           </View></View>}
         
-        {alert.status === 'closed' && <View style={styles.closedCard}>
-          <FontAwesome5 name="check-circle" size={20} color="#288928" />
-          <Text style={styles.closedText}>{alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}</Text>
-        </View>}
+        {alert.status === 'closed' && (
+          <View style={styles.closedCard}>
+            <FontAwesome5 name="check-circle" size={20} color="#288928" />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={styles.closedTitle}>Alert Closed</Text>
+              <Text style={styles.small}>
+                {alert.cancelledReason ? 'Cancelled by the bystander who raised it — likely a false alarm.' : 'This incident is no longer active.'}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <ReasonPromptModal
           visible={guardianModalVisible}
@@ -234,8 +241,12 @@ const styles = StyleSheet.create({
   notSafe: { color: '#a83232', backgroundColor: '#fbd1d1' }, 
   actionNotice: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff8f8', borderWidth: 1, borderColor: '#e7c1c1', borderRadius: 10, padding: 11, marginBottom: 8 },
   actionNoticeText: { flex: 1, marginLeft: 9, fontSize: typography.caption, lineHeight: Math.ceil(typography.caption * 1.5), fontFamily: 'Poppins_400Regular', color: '#555' },
+  
   escalationCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', backgroundColor: '#fff5f5', borderRadius: 12, padding: 13, marginTop: 15 }, 
-  escalationTitle: { fontSize: typography.detail, color: '#a83232', fontFamily: 'Poppins_600SemiBold' }, 
+  escalationTitle: { fontSize: typography.detail, color: '#a83232', fontFamily: 'Poppins_600SemiBold' },   
+  closedCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#288928', backgroundColor: '#f5fff5', borderRadius: 12, padding: 13, marginTop: 15 },
+  closedTitle: { fontSize: typography.detail, color: '#288928', fontFamily: 'Poppins_600SemiBold' },
+
   discrepancyCard: { flexDirection: 'row', alignItems: 'flex-start', borderWidth: 1, borderColor: '#e3b1b1', backgroundColor: '#fff1f1', borderRadius: 12, padding: 12, marginBottom: 8 }, 
   readOnlyNote: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f6f6f6', borderRadius: 10, padding: 11, marginTop: 15, marginBottom: -10 },
   readOnlyText: { flex: 1, fontSize: typography.caption, lineHeight: Math.ceil(typography.caption * 1.5), fontFamily: 'Poppins_400Regular', color: '#777', marginLeft: 12 },

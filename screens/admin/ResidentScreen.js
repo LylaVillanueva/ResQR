@@ -69,7 +69,7 @@ export default function ResidentScreen({ navigation }) {
           <TouchableOpacity
             key={resident.id}
             style={styles.residentCard}
-            onPress={() => navigation.navigate('ProfileScreen', { resident })}
+            onPress={() => navigation.navigate('ProfileScreen', { residentId: resident.id })}
             activeOpacity={0.8}
           >
             <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { padding: spacing.screen, paddingTop: 0, marginTop: 20 },
   buttonContent: { paddingHorizontal: 20, paddingVertical: 12, justifyContent: 'flex-end' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 12, rowGap: 8 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' , flexWrap: 'wrap', columnGap: 4, rowGap: 8 },
   heading: { fontSize: typography.title, fontFamily: 'Poppins_700Bold', marginTop: 4 }, 
   divider: { borderTopWidth: 1, borderTopColor: '#ddd' },
   

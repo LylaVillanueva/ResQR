@@ -112,7 +112,7 @@ export default function ResidentScreen({ navigation }) {
               <TouchableOpacity
                 key={ward.id}
                 style={[styles.wardCard, active && styles.wardCardActive]}
-                onPress={() => navigation.navigate('ProfileScreen', { resident: ward })}
+                onPress={() => navigation.navigate('ProfileScreen', { residentId: ward.id })}
                 activeOpacity={0.85}
               >
                 <Image
