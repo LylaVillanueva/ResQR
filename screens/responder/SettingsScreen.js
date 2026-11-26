@@ -1,21 +1,23 @@
-import { typography, spacing } from '../../theme';
+import { typography, spacing, colors, font, radius } from '../../constants/theme';
+import { changePhoto } from '../../utils/photos';
+import Avatar from "../../components/Avatar";
 import React, { useState } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import Text from "../../component/AppText";
+import Text from "../../components/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import TabBar from "../../component/ResponderTabButtons";
-import InfoModal from "../../component/InfoModal";
-import { useAppData } from "../../lib/AppDataContext";
-import useNotificationPrefs from "../../lib/useNotificationPrefs";
-import { Section, Divider, ToggleRow, LinkRow, InfoRow } from "../../component/ui";
-import { colors, font, radius } from '../../theme';
-import { useAccessibilitySettings, FONT_SCALES, FONT_FAMILIES, LANGUAGES } from "../../lib/AccessibilitySettingsContext";
+import TabBar from "../../components/tabs/ResponderTabButtons";
+import InfoModal from "../../components/modals/InfoModal";
+import { useAppData } from "../../contexts/AppDataContext";
+import useNotificationPrefs from "../../hooks/useNotificationPrefs";
+import { Section, Divider, ToggleRow, LinkRow, InfoRow } from "../../components/ui";
+import { useAccessibilitySettings, FONT_SCALES, FONT_FAMILIES, LANGUAGES } from "../../contexts/AccessibilitySettingsContext";
 
 
 export default function SettingsScreen({ navigation, setSession }) {
-  const { account } = useAppData();
-  const { prefs, set, setPushEnabled } = useNotificationPrefs();
+  const { account, myPhotoUrl, setAccountPhoto } = useAppData();
+  const changeMyPhoto = () => changePhoto({ title: 'Your photo', hasPhoto: !!myPhotoUrl, save: (image) => setAccountPhoto(account.id, image) });
+  const { prefs, set, setPushEnabled, pushSupported } = useNotificationPrefs();
   const { fontScaleKey, fontFamilyKey, languageKey, t } = useAccessibilitySettings();
 
   const [infoModal, setInfoModal] = useState(null); // { title, message }
@@ -35,16 +37,16 @@ export default function SettingsScreen({ navigation, setSession }) {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.heading}>Settings</Text>
+        <Text style={styles.heading} accessibilityRole="header">{t('settings')}</Text>
         <View style={styles.divider} />
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={[styles.residentCard, styles.shadow]}>
-          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <Avatar uri={myPhotoUrl} name={account.fullName} style={styles.residentPhoto} onChangePress={changeMyPhoto} />
           <View style={{ flex: 1, margin: 0 }}>
             <Text style={styles.contextTitle}>{account.fullName}</Text>
-            <Text style={styles.small}>Role: {account.role}</Text>
+            <Text style={styles.small}>Barangay Responder • {account.barangayName}</Text>
             <Text style={styles.small}>ID Number: {account.id}</Text>
           </View>
         </View>
@@ -58,7 +60,7 @@ export default function SettingsScreen({ navigation, setSession }) {
         </Section>
 
         <Section compact title={t('notifications')}>
-          <ToggleRow compact label={t('pushNotifications')} value={prefs.pushEnabled} onChange={setPushEnabled} />
+          {pushSupported && <ToggleRow compact label={t('pushNotifications')} value={prefs.pushEnabled} onChange={setPushEnabled} />}
           <Divider />
           <ToggleRow compact label={t('emergencyAlertSound')} value={prefs.alertSound} onChange={(v) => set('alertSound', v)} />
           <Divider />
@@ -114,9 +116,9 @@ const styles = StyleSheet.create({
   meta: { fontSize: typography.caption, color: colors.textSecondary, fontFamily: font.regular, marginTop: 2 },
   heading: { fontSize: typography.title, fontFamily: font.semibold, marginBottom: 4 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
-  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16, marginTop: 16 },
-  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
-  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 12, backgroundColor: colors.primarySoft, padding: spacing.card, marginBottom: 16, marginTop: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.border, marginRight: 11 },
+  small: { fontSize: typography.caption, color: colors.textSecondary, fontFamily: 'Poppins_400Regular', marginTop: 2 },
   contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
   logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.dangerSurface, borderRadius: radius.md, paddingVertical: 13, marginTop: 22 },
   logoutText: { color: colors.primary, fontFamily: font.semibold, marginLeft: 7 },

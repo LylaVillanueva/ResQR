@@ -1,121 +1,97 @@
-# QRAlalay mobile
+# QRAlalay Mobile
 
-Expo 57 / React Native mobile application for barangay officials, guardians, and responders. The UI uses the existing RESQR2 backend; no sample accounts, incidents, or residents are injected into signed-in sessions.
+Expo SDK 57 / React Native app for barangay officials, guardians and responders.
+It signs in with email one-time codes and reads and writes data through the
+hosted Supabase project (Project B) using its database functions and Edge
+Functions. The public bystander page is a separate app (`../QRAlalay-Web`,
+published at https://www.qralalay.app).
 
-## Run
+## Run on a phone
 
-Use Node.js 22.13 or newer, then:
+Requires Node.js 22.13 or newer and **Expo Go for SDK 57** on the phone (the
+Play Store version may be newer; install the SDK 57 build from
+https://expo.dev/go?sdkVersion=57&platform=android&device=true).
 
 ```sh
 npm install
-npm start
+npx expo start --lan
 ```
 
-Start an Android virtual device in Android Studio and run `npm run android`, or press `a` in the Expo terminal. Use an Expo Go build compatible with SDK 57, or a development build.
+In Expo Go choose **Enter URL manually** and open `exp://<this Mac's LAN IP>:8081`
+(both devices on the same Wi-Fi). If the network blocks device-to-device
+traffic, use `npx expo start --tunnel`.
 
-Keep local configuration in `.env` (ignored by Git):
+Local configuration lives in `.env` (ignored by Git; see `.env.example`):
 
 ```dotenv
-EXPO_PUBLIC_API_BASE_URL=http://10.0.2.2:3000/api
-# Optional official contact number used by the emergency-help screen:
-EXPO_PUBLIC_BARANGAY_PHONE=
+EXPO_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<publishable key>
+EXPO_PUBLIC_BACKEND_MODE=supabase
 ```
 
-The URL above is an example for an Android emulator connecting to a backend on the host Mac. Use the actual port and API URL for your backend. Existing Supabase configuration is preserved for code that imports the Supabase helper. Public Expo variables must not contain server secrets.
+Only the publishable key belongs here; Expo puts `EXPO_PUBLIC_*` values into
+the app bundle. Without `EXPO_PUBLIC_BACKEND_MODE=supabase` the app uses the
+legacy Express API at `EXPO_PUBLIC_API_BASE_URL`, which is kept until its
+retirement is approved.
 
-## Structure
+## Folder structure
 
 ```text
-App.js                         Expo entry shim
-src/App.js                     Fonts and providers
-src/navigation/                Role route registry and navigator
-src/context/AppDataContext.js  Shared live data, refresh, and mutation state
-src/hooks/                     Session restoration and resident profile loading
-src/lib/api.js                 Authenticated HTTP client and token rotation
-src/lib/appData.js             Backend-to-screen loading and write operations
-src/lib/models.js              Backend record/display mappings
-src/components/                Role navigation bars and loading/error UI
-src/screens/auth/              Login, start, and permission flow
-src/screens/admin/             Official dashboard and management screens
-src/screens/guardian/          Ward, alert, and emergency-help screens
-src/screens/responder/         Assignment, confirmation, and report screens
-src/screens/shared/            Shared camera scanner
-src/web/                       Public QR landing screen
-assets/                        Existing images and icons
-tests/                        Data-contract regression tests
+App.js, index.js       Expo entry, fonts and providers
+assets/                Icons and images used by app.json and screens
+components/            Shared UI: AppText, AppTextInput, Avatar, ScreenState, ui, LiveLocationMap
+  modals/              AppModal (base dialog), InfoModal, IncidentLogModal, ReasonPromptModal
+  tabs/                Tab bars for each role
+constants/             theme.js (palette, type, spacing), translations, legal text, audit types
+contexts/              AppDataContext (live data and actions), AccessibilitySettingsContext
+hooks/                 useSession, useResidentProfile, useNotificationPrefs
+navigation/            AppNavigator and the per-role screen registry
+screens/
+  auth/                Start, sign-in and permissions
+  official/            Barangay official dashboard, residents, users, alerts, QR cards
+  guardian/            Wards, alerts, safety observations, emergency help
+  responder/           Assignments, safety observations, incident reports
+  shared/              Scanner, confirmation, legal, accessibility, public emergency help, public scan page
+services/              Backend and device communication: api (backend switch), supabaseApi,
+                       supabase client, appData, sessions, notifications, push, QR PDF export
+utils/                 Record mappers (models), QR card HTML, photo picking
+tests/                 Node test runner suites (no network)
 ```
 
-## Merge decisions
+Screens never call Supabase directly; they go through `services/api.js`.
 
-- Retains OTP login, secure native sessions, post-login permissions, existing enrollment/guardian registration, generated QR cards, and the QRAlalay branding/logo updates.
-- Integrates incoming role dashboards, alert filters, user management layouts, ward views, emergency help, and responder incident/report screens.
-- Uses backend user IDs to match wards and assignments. Backend incident status controls display categories; `confirmed_safe`, `resolved`, and `closed` remain in the Closed filter, matching the existing integration.
-- Reloads shared data when screens gain focus, when the app becomes active, and every 15 seconds while active. Failed refreshes preserve the last loaded screen and display a retry message.
-- Supports legacy resident-ID scan links and current `/scan/:token` links. Public previews use sanitized backend data; sending an emergency alert calls the scan-event endpoint.
-- Only officials can issue QR cards. Issuing a new card replaces the previous token, so the profile action explicitly confirms that change.
-- The incident report submits `finalActionSummary` to the existing resolve endpoint and marks the incident resolved. The form states this before submission.
+## Colours
 
-## Shared interface
+All colours come from `constants/theme.js`. The approved palette is exported
+as `palette`; screens use the role-based `colors` tokens:
 
-`src/theme.js` defines 28-point titles, 22-point section headings, 18-point body/field text, 24-point page and form spacing, and controls at least 56 points tall. White pages, light-gray fields, subtle borders, and red accents follow the enrollment reference. `components/ui.js`, `AppText`, `AppTextInput`, `AppPicker`, and `TabBar` share those styles across all roles. Text-size and font preferences persist in Accessibility settings; text line heights scale with the chosen size.
+| Role | Token | Value |
+|---|---|---|
+| Brand, navigation | `colors.primary` | `#176B87` |
+| Urgent, escalation, destructive | `colors.alert` (icons, borders), `colors.alertInk` (text, filled buttons) | `#E94F50`, `#B42B2C` |
+| Pending, warning | `colors.warning` (fills), `colors.warningInk` (text) | `#F4C430`, `#7A5A00` |
+| Verified, safe, success | `colors.successBase`, `colors.successInk` | `#2E9B70`, `#1E7353` |
+| Background, surface | `colors.background`, `colors.surface` | `#F5F7FA`, `#FFFFFF` |
+| Text | `colors.textPrimary`, `colors.textSecondary` | `#243442`, `#64748B` |
+| Borders | `colors.border` | `#E2E8F0` |
 
-## Backend update
+The `*Ink` shades exist because the base red, green and yellow are below the
+4.5:1 contrast needed for normal-size text. Status pills always carry a text
+label, so status never depends on colour alone. Add new colours to the theme
+rather than as literals in a screen.
 
-RESQR2 now exposes a barangay-scoped account directory and account create/edit/role/status endpoints. Account edits persist phone, email, and official position; new guardian accounts can save ward relationships. Access changes revoke sessions, and active wards/assignments must be reassigned before disabling their guardian/responder.
-
-On an existing backend database, apply the additive schema update from `RESQR2` before using account management:
+## Checks
 
 ```sh
-npm run migrate -- 004_account_management.sql
+npm test                 # unit and contract tests in tests/
+npx expo install --check # SDK 57 dependency versions
 ```
 
-Restart the backend after updating its code. Guardian/responder profiles still direct users to the barangay for issued QR cards. QR file downloads and server synchronization of individual notification categories remain outside this update.
+Bundling and live behaviour (sign-in, QR issue/export, assistance workflow)
+are verified on a phone through Expo Go.
 
 ## Notifications
 
-Expo Go and web preview skip loading the native push-notifications module. Remote push requires a development build, an EAS project ID, and platform push credentials. Notification preferences persist locally; supported native builds register their Expo token with the backend. Expo Go can be used to preview the rest of the interface without registering for remote push.
-
-## Validation
-
-```sh
-npm test
-npx expo install --check
-npx expo export --platform android --output-dir /tmp/qralalay-android
-```
-
-The automated tests cover data mappings, role-specific reads, closed-alert history, real account creation payloads, and report persistence/error propagation. An export validates bundling, not end-to-end login, hardware permissions, or live emergency delivery; verify those with test accounts and an emulator/device.
-
-## Changes after the recent pull
-
-The original README above is retained as it appeared in commit `0d9d654`. The paths in its Structure and Shared interface sections describe that version; the current locations are listed below.
-
-### Restored folder layout
-
-The current UI and functionality were preserved while 73 files were moved into the earlier folder layout. A total of 205 relative references were updated.
-
-| Previous location | Current location |
-| --- | --- |
-| `src/components/` | `component/` |
-| `src/context/`, `src/hooks/`, and `src/lib/` | `lib/` |
-| `src/navigation/AppNavigator.js` | `component/AppNavigator.js` |
-| `src/navigation/screens.js` | `lib/screenRegistry.js` |
-| `src/screens/auth/` and `src/screens/shared/` | `screens/` |
-| `src/screens/admin/`, `guardian/`, and `responder/` | Corresponding role folders under `screens/` |
-| `src/web/` | `web/` |
-| `src/App.js` and `src/theme.js` | Root `App.js` and `theme.js` |
-| `tests/` | Root `*.test.cjs` files |
-
-The emptied folders were removed. The test command now runs the root test files. Screen layouts, styles, navigation, account management, alerts, and incident reporting were retained.
-
-### Login and local connection changes
-
-- Registered accounts use the fixed test code `123456`. Select Continue to prepare the code, then enter it and select Verify.
-- The backend login-code flow no longer calls Resend; no email or SMS is sent. The app explains that the test code is ready.
-- The local, Git-ignored API URL was changed from the Android-emulator address to the Mac's LAN address for testing on a physical phone. Update that address if the Mac's network address changes.
-
-### Checks completed
-
-- All 13 mobile tests passed.
-- Android, iOS, and web exports bundled successfully.
-- Code comparison confirmed that the folder reorganization changed relative paths while preserving code, JSX, styles, and text.
-- Backend typechecking passed after the login-code changes. Device login and email delivery were not verified end to end; email delivery is disabled in the current test flow.
+Expo Go and web skip the native push module, and the push toggle is hidden
+there. Remote push needs a development build, an EAS project ID and push
+credentials. In-app refresh and Realtime updates work in Expo Go.

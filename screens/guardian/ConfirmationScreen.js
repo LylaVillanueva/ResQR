@@ -1,5 +1,5 @@
 import React from 'react';
-import SharedConfirmationScreen from "../ConfirmationScreen";
+import SharedConfirmationScreen from "../shared/ConfirmationScreen";
 
 const NOT_SAFE_BULLETS = [
   'This will escalate the alert because your ward may still need assistance.',

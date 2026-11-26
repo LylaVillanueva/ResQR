@@ -3,16 +3,24 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const asModule = (source) => 'data:text/javascript;base64,' + Buffer.from(source).toString('base64');
-const modelsUrl = asModule(fs.readFileSync(path.join(__dirname, '../src/lib/models.js'), 'utf8'));
+const modelsUrl = asModule(fs.readFileSync(path.join(__dirname, "../utils/models.js"), 'utf8'));
 const models = import(modelsUrl);
-const service = import(asModule(fs.readFileSync(path.join(__dirname, '../src/lib/appData.js'), 'utf8').replace("'./models'", JSON.stringify(modelsUrl))));
+const cacheSource = asModule(fs.readFileSync(path.join(__dirname, '../services/barangayContactCache.js'), 'utf8'));
+const contactCache = import(cacheSource);
+globalThis.__qralalayContactTestStorage = { async getItem() { return null; }, async setItem() {}, async removeItem() {} };
+const appDataSource = fs.readFileSync(path.join(__dirname, "../services/appData.js"), 'utf8')
+  .replace("'../utils/models'", JSON.stringify(modelsUrl))
+  .replace("import { sessionStorage } from './sessionStorage';", 'const sessionStorage = globalThis.__qralalayContactTestStorage;')
+  .replace("'./barangayContactCache'", JSON.stringify(cacheSource));
+const service = import(asModule(appDataSource));
 
 function clientFixture() {
   const calls = [];
   const client = {};
-  for (const name of ['listResidents', 'listActiveIncidents', 'listAuditLogs', 'listAccounts', 'createAccount', 'resolveIncident']) {
+  for (const name of ['listResidents', 'listActiveIncidents', 'listAuditLogs', 'listAccounts', 'listBarangayContacts', 'createAccount', 'resolveIncident']) {
     client[name] = async (...args) => { calls.push([name, ...args]); return []; };
   }
+  client.getMyProfile = async (...args) => { calls.push(['getMyProfile', ...args]); return null; };
   return { client, calls };
 }
 
@@ -36,13 +44,55 @@ test('resident API identity is separate from its displayed card code', async () 
   assert.deepEqual(mapUser({ id: 'guardian-2', full_name: 'Guardian' }, 'guardian', residents).wardIds, []);
 });
 
+test('secure session adapter maps Supabase storage calls to SecureStore and propagates failures', async () => {
+  const adapterUrl = asModule(fs.readFileSync(path.join(__dirname, '../services/secureSessionStorageAdapter.js'), 'utf8'));
+  const { createSecureSessionStorageAdapter } = await import(adapterUrl);
+  const calls = [];
+  const secureStore = {
+    async getItemAsync(key) { calls.push(['get', key]); return 'stored-session'; },
+    async setItemAsync(key, value) { calls.push(['set', key, value]); },
+    async deleteItemAsync(key) { calls.push(['delete', key]); },
+  };
+  const storage = createSecureSessionStorageAdapter(secureStore);
+  assert.equal(await storage.getItem('auth-key'), 'stored-session');
+  await storage.setItem('auth-key', 'session-value');
+  await storage.removeItem('auth-key');
+  assert.deepEqual(calls, [
+    ['get', 'auth-key'],
+    ['set', 'auth-key', 'session-value'],
+    ['delete', 'auth-key'],
+  ]);
+  secureStore.getItemAsync = async () => { throw new Error('SecureStore unavailable'); };
+  await assert.rejects(storage.getItem('auth-key'), /SecureStore unavailable/);
+});
+
+test('verified barangay contact cache stores only public confirmed values and supports guest emergency access', async () => {
+  const { readVerifiedContacts, readLastVerifiedContacts, writeVerifiedContacts } = await contactCache;
+  const values = new Map();
+  const storage = {
+    async getItem(key) { return values.get(key) || null; },
+    async setItem(key, value) { values.set(key, value); },
+  };
+  await writeVerifiedContacts(storage, 'barangay-1', [
+    { id: 'contact-1', label: 'Hotline', phone: '+639171234567', availability: '24 hours', isPrimary: true, isActive: true, verifiedAt: '2026-11-25T00:00:00Z', internalNote: 'do not persist' },
+    { id: 'contact-2', label: 'Unconfirmed', phone: '+639171111111', isActive: false, verifiedAt: null },
+  ], '2026-11-26T00:00:00Z', 'Test Barangay');
+  const cached = await readVerifiedContacts(storage, 'barangay-1');
+  assert.deepEqual(cached, [{ id: 'contact-1', label: 'Hotline', phone: '+639171234567', availability: '24 hours', isPrimary: true,
+    isActive: true, verifiedAt: '2026-11-25T00:00:00Z', cachedAt: '2026-11-26T00:00:00Z', isCached: true }]);
+  assert.deepEqual(await readLastVerifiedContacts(storage), {
+    contacts: [{ id: 'contact-1', label: 'Hotline', phone: '+639171234567', availability: '24 hours', isPrimary: true, isActive: true, verifiedAt: '2026-11-25T00:00:00Z', isCached: true }],
+    barangayName: 'Test Barangay', cachedAt: '2026-11-26T00:00:00Z',
+  });
+});
+
 test('incident mapping uses scan location and retains the saved report', async () => {
   const { mapIncident } = await models;
-  const incident = mapIncident({ id: 'i1', status: 'resolved', scan_landmark_notes: 'Library entrance', home_address: 'Private home', final_action_summary: 'Resident assisted', assigned_responder_id: 'r1' });
+  const incident = mapIncident({ id: 'i1', status: 'resolved', scan_address: 'Library entrance', home_address: 'Private home', final_action_summary: 'Resident assisted', assigned_responder_id: 'r1' });
   assert.equal(incident.location, 'Library entrance');
   assert.equal(incident.incidentReport, 'Resident assisted');
   assert.equal(incident.responderId, 'r1');
-  assert.equal(mapIncident({ scan_latitude: 0, scan_longitude: 0 }).location, '0, 0');
+  assert.equal(mapIncident({ scan_latitude: 0, scan_longitude: 0 }).location, 'Near 0.0000, 0.0000');
   assert.equal(mapIncident({ home_address: 'Private home' }).location, 'Location unavailable');
 });
 
@@ -51,7 +101,7 @@ test('guardian and responder loads never call official-only account endpoints', 
   for (const role of ['guardian', 'barangay_responder']) {
     const { client, calls } = clientFixture();
     const data = await loadAppData(client, { id: 'u1', fullName: 'User', role });
-    assert.deepEqual(calls.map(([name]) => name).sort(), ['listActiveIncidents', 'listAuditLogs', 'listResidents']);
+    assert.deepEqual(calls.map(([name]) => name).sort(), ['getMyProfile', 'listActiveIncidents', 'listAuditLogs', 'listBarangayContacts', 'listResidents']);
     assert.deepEqual(calls.find(([name]) => name === 'listActiveIncidents')[1], { includeClosed: true });
     assert.deepEqual(data.alerts, []);
     assert.deepEqual(data.residents, []);
@@ -86,9 +136,9 @@ test('staff creation uses the account contract without creating a resident', asy
 test('reports persist via resolve and propagate rejected writes', async () => {
   const { submitIncidentReport } = await service;
   const { client, calls } = clientFixture();
-  const report = { natureOfEmergency: 'Fall', actionsTaken: 'Assisted resident', conditionOfResident: 'Stable' };
+  const report = { natureOfEmergency: 'Fall', actionsTaken: 'Assisted resident', conditionOfResident: 'Stable', outcome: 'assisted_independently' };
   await submitIncidentReport(client, 'incident-uuid', report);
-  assert.deepEqual(calls[0], ['resolveIncident', 'incident-uuid', 'Nature of emergency: Fall\nActions taken: Assisted resident\nResident condition: Stable']);
+  assert.deepEqual(calls[0], ['resolveIncident', 'incident-uuid', report]);
   client.resolveIncident = async () => { throw new Error('Not assigned'); };
   await assert.rejects(submitIncidentReport(client, 'incident-uuid', report), /Not assigned/);
   assert.throws(() => submitIncidentReport(client, null, report), /Choose an incident/);
@@ -120,4 +170,5 @@ test('no-guardian review stays active and requires the assigned responder report
   assert.equal(mapIncident({ ...reported, responder_decision: 'not_safe' }).readyForReview, false);
   assert.equal(mapIncident({ ...reported, assigned_responder_id: 'r2' }).readyForReview, false);
   assert.equal(mapIncident({ ...reported, guardian_required: true }).officialReviewRequired, false);
+  assert.equal(mapIncident({ ...reported, guardian_required: true, guardian_decision: 'safe' }).readyForReview, true);
 });

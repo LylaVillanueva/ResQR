@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const source = fs.readFileSync(path.join(__dirname, '../src/lib/notificationPermissions.js'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, "../services/notificationPermissions.js"), 'utf8');
 const factory = import('data:text/javascript;base64,' + Buffer.from(source).toString('base64'));
 
 test('Expo Go and web never evaluate the unsupported notifications module', async () => {

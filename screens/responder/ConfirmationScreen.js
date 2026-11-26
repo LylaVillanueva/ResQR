@@ -1,5 +1,5 @@
 import React from 'react';
-import SharedConfirmationScreen from "../ConfirmationScreen";
+import SharedConfirmationScreen from "../shared/ConfirmationScreen";
 
 const NOT_SAFE_BULLETS = [
   'This will immediately escalate the alert to high priority.',

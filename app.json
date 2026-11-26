@@ -33,6 +33,14 @@
         {
           "locationWhenInUsePermission": "QRAlalay uses your location to record where a QR code was scanned during an emergency."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "QRAlalay uses your photos so you can add a profile picture for a resident or account.",
+          "cameraPermission": "QRAlalay uses the camera so you can take a profile picture for a resident or account.",
+          "microphonePermission": false
+        }
       ]
     ],
     "extra": {

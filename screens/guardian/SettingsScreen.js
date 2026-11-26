@@ -1,20 +1,22 @@
-import { typography, spacing } from '../../theme';
-import { useAppData } from "../../lib/AppDataContext";
+import { typography, spacing, colors, font, radius } from '../../constants/theme';
+import { changePhoto } from '../../utils/photos';
+import Avatar from "../../components/Avatar";
+import { useAppData } from "../../contexts/AppDataContext";
 import React, { useState, useMemo } from 'react';
 import { View, StyleSheet, Image, TouchableOpacity, ScrollView, Alert } from 'react-native';
-import Text from "../../component/AppText";
+import Text from "../../components/AppText";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-import TabBar from "../../component/TabButtons";
-import InfoModal from "../../component/InfoModal";
-import useNotificationPrefs from "../../lib/useNotificationPrefs";
-import { Section, Divider, ToggleRow, LinkRow, InfoRow } from "../../component/ui";
-import { colors, font, radius } from '../../theme';
-import { useAccessibilitySettings, FONT_SCALES, FONT_FAMILIES, LANGUAGES } from "../../lib/AccessibilitySettingsContext";
+import TabBar from "../../components/tabs/TabButtons";
+import InfoModal from "../../components/modals/InfoModal";
+import useNotificationPrefs from "../../hooks/useNotificationPrefs";
+import { Section, Divider, ToggleRow, LinkRow, InfoRow } from "../../components/ui";
+import { useAccessibilitySettings, FONT_SCALES, FONT_FAMILIES, LANGUAGES } from "../../contexts/AccessibilitySettingsContext";
 
 export default function SettingsScreen({ navigation, setSession }) {
-  const { users, residents, account } = useAppData();
-  const { prefs, set, setPushEnabled } = useNotificationPrefs();
+  const { users, residents, account, myPhotoUrl, setAccountPhoto } = useAppData();
+  const changeMyPhoto = () => changePhoto({ title: 'Your photo', hasPhoto: !!myPhotoUrl, save: (image) => setAccountPhoto(account.id, image) });
+  const { prefs, set, setPushEnabled, pushSupported } = useNotificationPrefs();
   const { fontScaleKey, fontFamilyKey, languageKey, t } = useAccessibilitySettings();
 
   const guardianAccount = useMemo(() => users.find((user) => user.id === account.id), [users, account.id]);
@@ -35,7 +37,7 @@ export default function SettingsScreen({ navigation, setSession }) {
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={[styles.residentCard, styles.shadow]}>
-          <Image source={require("../../assets/profile.png")} style={styles.residentPhoto} />
+          <Avatar uri={myPhotoUrl} name={account.fullName} style={styles.residentPhoto} onChangePress={changeMyPhoto} />
           <View style={{ flex: 1, margin: 0 }}>
             <Text style={styles.contextTitle}>{account.fullName}</Text>
             <Text style={styles.small}>Role: {account.role}</Text>
@@ -56,7 +58,7 @@ export default function SettingsScreen({ navigation, setSession }) {
         </Section>
 
         <Section compact title={t('notifications')}>
-          <ToggleRow compact label={t('pushNotifications')} value={prefs.pushEnabled} onChange={setPushEnabled} />
+          {pushSupported && <ToggleRow compact label={t('pushNotifications')} value={prefs.pushEnabled} onChange={setPushEnabled} />}
           <Divider />
           <ToggleRow compact label={t('emergencyAlertSound')} value={prefs.alertSound} onChange={(v) => set('alertSound', v)} />
           <Divider />
@@ -80,7 +82,7 @@ export default function SettingsScreen({ navigation, setSession }) {
         <Section compact title={t('helpSupport')}>
           <LinkRow compact icon="question-circle" label={t('faq')} onPress={() => info('FAQ', 'Frequently asked questions about using QRAlalay.')} />
           <Divider />
-          <LinkRow compact icon="phone" label={t('barangayContactNumber')} onPress={() => info('Barangay Contact', 'Ask your barangay office for its official contact number.')} />
+          <LinkRow compact icon="phone" label={t('barangayContactNumber')} onPress={() => navigation.navigate('EmergencyHelp')} />
           <Divider />
           <LinkRow compact icon="bug" label={t('reportProblem')} onPress={() => info('Report a Problem', 'Please provide the issue you encountered.')} />
         </Section>
@@ -121,9 +123,9 @@ const styles = StyleSheet.create({
   meta: { fontSize: typography.caption, color: colors.textSecondary, fontFamily: font.regular, marginTop: 2 },
   heading: { fontSize: typography.title, fontFamily: font.semibold, marginBottom: 4 },
   divider: { borderTopWidth: 1, borderTopColor: colors.border },
-  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#a83232', borderRadius: 12, backgroundColor: '#ffdcdc', padding: spacing.card, marginBottom: 16, marginTop: 16 },
-  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: '#a83232', backgroundColor: '#ddd', marginRight: 11 },
-  small: { fontSize: typography.caption, color: '#555', fontFamily: 'Poppins_400Regular', marginTop: 2 },
+  residentCard: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: colors.primary, borderRadius: 12, backgroundColor: colors.primarySoft, padding: spacing.card, marginBottom: 16, marginTop: 16 },
+  residentPhoto: { width: 85, height: 100, borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.border, marginRight: 11 },
+  small: { fontSize: typography.caption, color: colors.textSecondary, fontFamily: 'Poppins_400Regular', marginTop: 2 },
   contextTitle: { fontSize: typography.body, fontFamily: 'Poppins_600SemiBold' },
   logout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: colors.primary, backgroundColor: colors.dangerSurface, borderRadius: radius.md, paddingVertical: 13, marginTop: 22 },
   logoutText: { color: colors.primary, fontFamily: font.semibold, marginLeft: 7 },

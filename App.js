@@ -1,11 +1,11 @@
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFonts, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
-import { AppDataProvider } from "./lib/AppDataContext";
-import { AccessibilitySettingsProvider, useAccessibilitySettings } from "./lib/AccessibilitySettingsContext";
-import useSession from "./lib/useSession";
-import AppNavigator from "./component/AppNavigator";
-import ScreenState from "./component/ScreenState";
+import { AppDataProvider } from "./contexts/AppDataContext";
+import { AccessibilitySettingsProvider, useAccessibilitySettings } from "./contexts/AccessibilitySettingsContext";
+import useSession from "./hooks/useSession";
+import AppNavigator from "./navigation/AppNavigator";
+import ScreenState from "./components/ScreenState";
 
 function Root() {
   const { session, setSession, restoring } = useSession();
